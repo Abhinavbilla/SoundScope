@@ -59,10 +59,12 @@ Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
 
+**Live site: https://soundscope-cglz.onrender.com**, hosted on Render. It rebuilds automatically on every push to `main`.
+
 Ready-made configs:
 
+- **Render (used):** `render.yaml` (Blueprint). In Render, choose *New → Blueprint* and pick this repo. It builds with `npm ci && npm run build:site` and serves `dist-site/` with the headers. Don't create it as a plain Static Site, or the headers in `render.yaml` are skipped.
 - **Cloudflare Pages:** `site/_headers` is copied into the build. Run `npm run deploy:preview`, then `npm run deploy`.
-- **Render:** `render.yaml` (Blueprint). In Render, choose *New → Blueprint*, pick this repo, and it builds with `npm ci && npm run build:site` and serves `dist-site/` with the headers.
 
 Any static host that can set custom headers works: Netlify, Vercel and others. GitHub Pages can't set headers, so it isn't suitable.
 

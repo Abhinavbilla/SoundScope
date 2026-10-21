@@ -1,6 +1,8 @@
-# Deploying to Cloudflare Pages
+# Deploying
 
-Reminder: test after every upload with `node tools/check-site.mjs <address> <audio> <video>`.
+**The site is on Render: https://soundscope-cglz.onrender.com.** It's a static site made from `render.yaml` (Blueprint), and Render rebuilds it on every push to `main`. To update, push to GitHub. To roll back, use Render → soundscope → Events → pick an earlier deploy → "Rollback". After a deploy, run `node tools/check-site.mjs https://soundscope-cglz.onrender.com <audio> <video>`.
+
+Cloudflare Pages was tried first and dropped on 2026-10-21. Its preview deployment and the leftover `workers.dev` worker were deleted; the empty Pages project `soundscope` is still in the account. The Cloudflare notes below are kept for reference.
 
 The site is static: the visitor's browser does all the work. Cloudflare only serves files.
 
@@ -70,7 +72,7 @@ First-visit model download (19.2 MB):
 
 This network throttles HTTP/3 (UDP). `pages.dev` doesn't allow turning HTTP/3 off. With a custom domain on Cloudflare it's one switch (Speed → Optimization → Protocol). Worth doing if visitors report a slow first load.
 
-## Render (to compare with Cloudflare)
+## Render (chosen)
 
 Code: https://github.com/Abhinavbilla/SoundScope (public). `render.yaml` describes the site:
 - build: `npm ci && npm run build:site` (downloads the model from Hugging Face and checks its hash);

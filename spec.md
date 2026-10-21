@@ -593,9 +593,10 @@ Can an image model help find sounds in videos? Tested on 549 UnAV-100 videos (40
 - Rough browser speed (Edge, this laptop): the sound model takes about 0.57 s per minute. CLIP adds 1.7–2.3 s per minute, plus 0.5–3.6 s to pull the frames (higher for 1080p and 4K). For a 1 h video that's about 35 s for sound alone against 3–6 extra minutes for the picture, and an 89 MB download instead of 19 MB.
 - Decision (2026-10-21): the app stays sound-only for now. If this comes back, it would be CLIP for a short list of sounds, after measuring browser speed and checking the list on more videos.
 
-## Deployment (Cloudflare Pages, in progress)
+## Deployment (done, Render)
 
-- Host: Cloudflare Pages, free plan. Upload with Wrangler from this laptop. Steps, checks and rollback are in `notes/deploy.md`.
+- **Live site: https://soundscope-cglz.onrender.com** (Render static site, free plan, made from `render.yaml` as a Blueprint). Render rebuilds it on every push to `main` on GitHub. `check-site.mjs` passes there in full: multi-threaded, model from the site and cached, no outside requests, no CSP blocks, test files not published.
+- Chosen over Cloudflare Pages on 2026-10-21. Analysis speed is the same on both, and Render downloaded the model a little faster here (1.8 s against 4.3 s over HTTP/2). The Cloudflare preview and the leftover `workers.dev` worker were deleted; the empty Pages project `soundscope` (`soundscope-e04.pages.dev`) is still in the Cloudflare account. Steps, checks and the Cloudflare history are in `notes/deploy.md`.
 - `npm run build:site` makes the public build in `dist-site/` (34 MB). It has the app, the model (served from the site, so the page talks to no other site), `_headers` and `THIRD-PARTY-NOTICES.txt`. The test models, test samples and the device test page are left out. The build stops if the model file doesn't match `config.js`.
 - Headers: cross-origin isolation (multi-threaded analysis), a strict Content-Security-Policy, no referrer, a 1-year cache for code and model files.
 - The model loader now unpacks the .gz only if it's still compressed, in case a host already did that on the way.
@@ -607,10 +608,9 @@ Can an image model help find sounds in videos? Tested on 549 UnAV-100 videos (40
   - test files not published.
   
   The UI, click-to-play, timeline, search, typo, bookmark, note and video-sound checks all pass against it too.
-- Live preview (2026-10-21): https://preview.soundscope-e04.pages.dev. Classic Pages, because this network blocks `*.workers.dev`, where Cloudflare now sends new projects. `check-site.mjs` passes there in Edge, Chrome and Firefox.
-- First visit: the 19.2 MB model takes about 4–5 s over HTTP/1.1 or HTTP/2. In Edge on this network it took 104 s, because the network throttles HTTP/3. HTTP/3 can only be turned off with a custom domain.
-- Real site: https://soundscope-e04.pages.dev, published once the preview is approved.
-- Code on GitHub (2026-10-21): https://github.com/Abhinavbilla/SoundScope (public), with a README. Left out: personal recordings, models, test data, the model-check folder, and personal details in notes. `render.yaml` lets Render build and host the same site, to compare first-load speed with Cloudflare. The model isn't in git: `tools/fetch-model.mjs` downloads it from Hugging Face during the build and checks its hash.
+- Cloudflare preview (since deleted): classic Pages, because this network blocks `*.workers.dev`, where Cloudflare now sends new projects. `check-site.mjs` passed there in Edge, Chrome and Firefox.
+- Known issue: on networks that throttle HTTP/3, like this one, the first visit in Edge or Chrome is slow: the 19.2 MB model took 79 s on Render and 104 s on Cloudflare, against about 2–4 s over HTTP/2. Render serves through Cloudflare and offers HTTP/3, and neither `onrender.com` nor `pages.dev` lets you turn it off. A custom domain on Cloudflare would. Later visits use the cached model.
+- Code on GitHub (2026-10-21): https://github.com/Abhinavbilla/SoundScope (public), with a README. Left out: personal recordings, models, test data, the model-check folder, and personal details in notes. The model isn't in git: `tools/fetch-model.mjs` downloads it from Hugging Face during the build and checks its hash.
 
 ## Done when
 
