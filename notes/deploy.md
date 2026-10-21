@@ -84,7 +84,9 @@ Code: https://github.com/Abhinavbilla/SoundScope (public). `render.yaml` describ
 
 A fresh clone was checked to build the same 34 MB `dist-site/` on its own.
 
-Live at https://soundscope-y3dl.onrender.com (2026-10-21). It was created as a Static Site by hand, not as a Blueprint, so `render.yaml`'s headers aren't applied yet.
+Now live at https://soundscope-cglz.onrender.com, made from the Blueprint. All headers arrive as in `render.yaml`, and `check-site.mjs` passes in full: multi-threaded (a 10 min video in 8.4 s, the same as Cloudflare), model from the site and cached, no outside requests, no CSP blocks. Model over HTTP/2: 1.8 s.
+
+The first try, https://soundscope-y3dl.onrender.com (now deleted), was created as a Static Site by hand, not as a Blueprint, so `render.yaml`'s headers weren't applied.
 - No cross-origin isolation, so analysis is single-threaded: a 10 min video took 19 s, against 8.4 s on Cloudflare.
 - The model gets `Cache-Control: max-age=0`. The app still keeps its own copy in the Cache API, so repeat visits don't download it again.
 - Everything else in `check-site.mjs` passes. Missing files get a 404 instead of the app page.
