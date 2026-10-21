@@ -70,6 +70,20 @@ First-visit model download (19.2 MB):
 
 This network throttles HTTP/3 (UDP). `pages.dev` doesn't allow turning HTTP/3 off. With a custom domain on Cloudflare it's one switch (Speed → Optimization → Protocol). Worth doing if visitors report a slow first load.
 
+## Render (to compare with Cloudflare)
+
+Code: https://github.com/Abhinavbilla/SoundScope (public). `render.yaml` describes the site:
+- build: `npm ci && npm run build:site` (downloads the model from Hugging Face and checks its hash);
+- publish: `dist-site/`;
+- headers: the same as `site/_headers`;
+- unknown paths go to `index.html`.
+
+1. In Render: New → Blueprint, connect GitHub, pick `Abhinavbilla/SoundScope`, then Apply.
+2. When it's live (`https://soundscope-xxxx.onrender.com`), run `node tools/check-site.mjs <that address> <audio> <video>`.
+3. Compare the first-visit model download with Cloudflare.
+
+A fresh clone was checked to build the same 34 MB `dist-site/` on its own.
+
 ## Roll back
 
 Every upload is kept. In the Cloudflare dashboard, go to Workers & Pages → soundscope → Deployments, then use "Rollback" on any earlier one. Or upload an older build again.

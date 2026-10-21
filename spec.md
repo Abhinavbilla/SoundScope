@@ -610,6 +610,7 @@ Can an image model help find sounds in videos? Tested on 549 UnAV-100 videos (40
 - Live preview (2026-10-21): https://preview.soundscope-e04.pages.dev. Classic Pages, because this network blocks `*.workers.dev`, where Cloudflare now sends new projects. `check-site.mjs` passes there in Edge, Chrome and Firefox.
 - First visit: the 19.2 MB model takes about 4–5 s over HTTP/1.1 or HTTP/2. In Edge on this network it took 104 s, because the network throttles HTTP/3. HTTP/3 can only be turned off with a custom domain.
 - Real site: https://soundscope-e04.pages.dev, published once the preview is approved.
+- Code on GitHub (2026-10-21): https://github.com/Abhinavbilla/SoundScope (public), with a README. Left out: personal recordings, models, test data, the model-check folder, and personal details in notes. `render.yaml` lets Render build and host the same site, to compare first-load speed with Cloudflare. The model isn't in git: `tools/fetch-model.mjs` downloads it from Hugging Face during the build and checks its hash.
 
 ## Done when
 
