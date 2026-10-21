@@ -66,7 +66,10 @@ ok(problems.length === 0, `no errors or failed requests${problems.length ? `:\n 
 for (const p of ["/device-test.html", "/models/frame_mn10.onnx", "/models/clip_b32_vision_int8.onnx", "/device-samples/clip.mp3"]) {
   const r = await page.request.get(base + p);
   const body = await r.body();
-  ok(body.length < 5000 && (r.headers()["content-type"] ?? "").includes("text/html"), `not published: ${p} (got ${r.status()}, ${body.length} bytes)`);
+  // a 404 (Render) or the app page itself (Cloudflare Pages, local server) both mean the file isn't there
+  const page404 = r.status() === 404;
+  const appPage = body.length < 5000 && (r.headers()["content-type"] ?? "").includes("text/html");
+  ok(page404 || appPage, `not published: ${p} (got ${r.status()}, ${body.length} bytes)`);
 }
 const n = await page.request.get(base + "/THIRD-PARTY-NOTICES.txt");
 ok(n.ok() && (await n.text()).includes("Mediabunny"), "licence notices published");

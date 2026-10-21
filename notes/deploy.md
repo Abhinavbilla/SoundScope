@@ -84,6 +84,22 @@ Code: https://github.com/Abhinavbilla/SoundScope (public). `render.yaml` describ
 
 A fresh clone was checked to build the same 34 MB `dist-site/` on its own.
 
+Live at https://soundscope-y3dl.onrender.com (2026-10-21). It was created as a Static Site by hand, not as a Blueprint, so `render.yaml`'s headers aren't applied yet.
+- No cross-origin isolation, so analysis is single-threaded: a 10 min video took 19 s, against 8.4 s on Cloudflare.
+- The model gets `Cache-Control: max-age=0`. The app still keeps its own copy in the Cache API, so repeat visits don't download it again.
+- Everything else in `check-site.mjs` passes. Missing files get a 404 instead of the app page.
+
+Render's static sites are served through Cloudflare too (`Server: cloudflare`, Mumbai) and also offer HTTP/3.
+
+Model download in Edge, fresh profile (`tools/measure-model-download.mjs`), on this network:
+
+| Host | HTTP/3 (default) | HTTP/2 (`--disable-quic`) |
+|---|---|---|
+| Render | 79.3 s | 1.9 s |
+| Cloudflare Pages | 104.5 s | 4.3 s |
+
+So the slow first visit comes from this network throttling HTTP/3, not from either host. Over HTTP/2, Render was about 2 s faster here.
+
 ## Roll back
 
 Every upload is kept. In the Cloudflare dashboard, go to Workers & Pages → soundscope → Deployments, then use "Rollback" on any earlier one. Or upload an older build again.
