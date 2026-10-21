@@ -36,3 +36,6 @@ public/device-samples/
 /*.wav
 /*.webm
 /*.mkv
+
+# Exported conversation transcripts (private)
+/transcript.*
