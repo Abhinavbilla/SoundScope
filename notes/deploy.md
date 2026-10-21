@@ -2,7 +2,7 @@
 
 **The site is on Render: https://soundscope-cglz.onrender.com.** It's a static site made from `render.yaml` (Blueprint), and Render rebuilds it on every push to `main`. To update, push to GitHub. To roll back, use Render → soundscope → Events → pick an earlier deploy → "Rollback". After a deploy, run `node tools/check-site.mjs https://soundscope-cglz.onrender.com <audio> <video>`.
 
-Cloudflare Pages was tried first and dropped on 2026-10-21. Its preview deployment and the leftover `workers.dev` worker were deleted; the empty Pages project `soundscope` is still in the account. The Cloudflare notes below are kept for reference.
+Cloudflare Pages was tried first and dropped on 2026-10-21. Its preview deployment, the leftover `workers.dev` worker and the Pages project `soundscope` were all deleted (nothing is left on Cloudflare). The Cloudflare notes below are kept for reference.
 
 The site is static: the visitor's browser does all the work. Cloudflare only serves files.
 
