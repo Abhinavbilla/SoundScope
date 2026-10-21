@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Device test</title>
+  </head>
+  <body>
+    <main class="app" id="root">
+      <header>
+        <h1>SoundScope device test</h1>
+        <p class="muted">Checks what this phone or browser can do. Results are shown here and sent back to the computer serving this page.</p>
+      </header>
+      <section class="result">
+        <div class="meta"><strong>This device</strong></div>
+        <ul class="kv" id="caps"></ul>
+      </section>
+      <section class="result">
+        <div class="meta">
+          <strong>Formats and model speed</strong>
+          <button type="button" class="button" id="run">Run</button>
+        </div>
+        <p class="muted small">Decodes a 20 s clip in each format, then times both models (downloads about 110 MB the first time).</p>
+        <ul class="kv" id="out"></ul>
+      </section>
+      <section class="result">
+        <div class="meta">
+          <strong>Long file (20 min)</strong>
+          <button type="button" class="button" id="long">Run</button>
+        </div>
+        <p class="muted small">Builds a 20-minute recording on the device and runs the full app pipeline on it. Takes a few minutes.</p>
+        <ul class="kv" id="longout"></ul>
+      </section>
+    </main>
+    <script type="module" src="/src/deviceTest.js"></script>
+  </body>
+</html>

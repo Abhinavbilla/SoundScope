@@ -1,0 +1,16 @@
+# Cloudflare Pages headers for the public site (copied into dist-site by `npm run build:site`).
+# Cross-origin isolation turns on multi-threaded analysis (SharedArrayBuffer). The page loads nothing
+# from other sites: code, fonts and the model are all served from here.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' blob: data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+
+# File names under /assets change with every build, and the model's name changes with the model.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/models/*
+  Cache-Control: public, max-age=31536000, immutable
