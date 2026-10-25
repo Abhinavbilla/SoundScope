@@ -20,6 +20,19 @@ export class StreamError extends Error {
 
 const CODEC_NAMES = { ac3: "AC-3 (Dolby Digital)", eac3: "E-AC-3 (Dolby Digital Plus)", dts: "DTS" };
 
+/**
+ * Browsers' WebCodecs can't decode Dolby Digital (common in movie MKVs), so Mediabunny's AC-3 extension
+ * (FFmpeg's decoder in WebAssembly, ~1.1 MB) is loaded the first time a file needs it, never up front.
+ * Returns false if it couldn't load; the caller then reports the codec as unsupported.
+ */
+let dolby = null;
+function loadDolbyDecoder() {
+  dolby ??= import("@mediabunny/ac3")
+    .then(({ registerAc3Decoder }) => { registerAc3Decoder(); return true; })
+    .catch(() => { dolby = null; return false; }); // e.g. offline: try again with the next file
+  return dolby;
+}
+
 const MP3_DECODER_DELAY = 529;
 
 /**
@@ -73,11 +86,16 @@ export async function openAudio(file, { streamReader = true } = {}) {
       null, { hasVideo });
   }
   const codec = await track.getCodec();
-  if (!(await track.canDecode())) {
+  let decodable = await track.canDecode();
+  if (!decodable && (codec === "ac3" || codec === "eac3") && (await loadDolbyDecoder())) {
+    decodable = await track.canDecode();
+  }
+  if (!decodable) {
     input.dispose();
-    const name = CODEC_NAMES[codec] ?? codec ?? "this";
+    const name = CODEC_NAMES[codec] ?? codec;
+    const format = name ? `a sound format (${name})` : "a sound format";
     throw new StreamError("codec",
-      `This ${hasVideo ? "video's" : "file's"} sound is stored in a format (${name}) this browser can't play. Try Chrome or Edge, or convert the file to MP4 or MP3.`,
+      `This ${hasVideo ? "video" : "file"} uses ${format} that SoundScope can't read. Convert it to MP4 or MP3 and open it again.`,
       null, { codec, hasVideo });
   }
   const duration = (await input.getDurationFromMetadata([track])) ?? (await input.computeDuration([track]));

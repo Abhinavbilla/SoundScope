@@ -82,6 +82,7 @@ export function openAudioFile(file, { onInfo, onProgress, onModel, onOverview, c
             duration: data.seconds,
             channels: data.channels,
             hasVideo: !!data.hasVideo,
+            codec: data.codec ?? null,
             peaks: concat(Float32Array, peakParts),
             peaksPerSecond: PEAKS_PER_SECOND,
             overview: concat(Uint8Array, overviewParts),
@@ -190,6 +191,7 @@ function fromSaved({ key, meta, overview, peaks }, loadMs) {
     duration: meta.duration,
     channels: meta.channels,
     hasVideo: !!meta.hasVideo,
+    codec: meta.codec ?? null, // results saved before this was recorded have none
     peaks,
     peaksPerSecond: meta.peaksPerSecond,
     overview,

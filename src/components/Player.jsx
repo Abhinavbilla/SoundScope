@@ -18,9 +18,9 @@ const RATES = [1, 1.5, 2];
  * Pressing anywhere on the waveform or a lane moves the playhead there (drag to scrub) and plays from
  * that point when released.
  * `onReady(player)` gets { playFrom(t), toggle(), skip(s), on(event, fn) -> unsubscribe, time(), playing() }
- * (null on unmount).
+ * (null on unmount). `onCantPlay()` is called if the browser can't play the file at all.
  */
-export default function Player({ file, peaks, duration, videoRef = null, theme, markers = [], markerColor, onReady, children }) {
+export default function Player({ file, peaks, duration, videoRef = null, theme, markers = [], markerColor, onReady, onCantPlay, children }) {
   const video = !!videoRef;
   const containerRef = useRef(null);
   const markersRef = useRef(null);
@@ -72,10 +72,15 @@ export default function Player({ file, peaks, duration, videoRef = null, theme, 
     const moveHead = (t) => { if (playheadRef.current) playheadRef.current.style.left = `${(t / duration) * 100}%`; };
     const offTime = ws.on("timeupdate", moveHead);
     const offSeek = ws.on("seeking", moveHead);
+    // The analysis may have read a format the browser's player can't (e.g. Dolby Digital).
+    const element = ws.getMediaElement();
+    const failed = () => { if (element?.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) onCantPlay?.(); };
+    element?.addEventListener("error", failed);
     setPlayer(p);
     onReady?.(p);
     const media = videoRef?.current;
     return () => {
+      element?.removeEventListener("error", failed);
       offTime();
       offSeek();
       onReady?.(null);

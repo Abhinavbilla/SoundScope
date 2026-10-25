@@ -18,7 +18,7 @@ Everything runs in your browser. **Your recordings are never uploaded.** The sit
 - **Long files.** Tested up to 10 hours. Results are saved on your device, so reopening a file is instant.
 - **Light and dark themes.** Works on phone screens.
 
-Formats: MP3, WAV, M4A/AAC, FLAC, OGG/Opus, and the video formats above.
+Formats: MP3, WAV, M4A/AAC, FLAC, OGG/Opus, and the video formats above. Dolby Digital sound (AC-3 / E-AC-3, common in movie MKVs) is decoded by SoundScope itself, because most browsers can't. Its decoder (1.1 MB) is only downloaded when such a file is opened. Most browsers can't *play* Dolby sound either: the video then plays silently, and a note says so. The results are complete, and clips have sound.
 
 ## How it works
 
@@ -82,6 +82,8 @@ node tools/check-ui-controls.mjs <audio>         # keyboard, buttons, theme, no 
 node tools/check-seek.mjs <audio or video>       # click / drag on the timeline
 node tools/check-bookmarks.mjs <outDir> <audio>  # bookmarks, notes, downloads
 node tools/check-note-search.mjs <outDir> <audio>
+node tools/make-dolby-sample.mjs <audio or video> <out.mkv> [ac3|eac3] [sound file]   # a Dolby test file, no ffmpeg
+SS_BROWSER=chrome node tools/check-dolby.mjs <outDir> <dolby file> [same recording, normal format]
 node tools/check-site.mjs <site url> <audio> <video>   # a deployed site: headers, model, no outside requests
 ```
 
@@ -114,7 +116,7 @@ The model was checked on five public labelled datasets (real rooms, bird recordi
 - **Sound categories:** AudioSet ontology by Google, CC BY-SA 4.0.
 - **Libraries:**
   - ONNX Runtime Web (MIT)
-  - Mediabunny (MPL-2.0)
+  - Mediabunny (MPL-2.0), and its AC-3 extension (MPL-2.0) with FFmpeg's AC-3 decoder (LGPL-2.1)
   - wavesurfer.js (BSD-3-Clause)
   - React (MIT)
   - Lucide icons (ISC)

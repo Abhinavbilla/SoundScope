@@ -70,6 +70,12 @@ const NOTICES = [ // [name, licence, licence file]
   ["React, React DOM", "MIT", "node_modules/react/LICENSE"],
   ["scheduler", "MIT", "node_modules/scheduler/LICENSE"],
   ["Mediabunny", "MPL-2.0 (source: https://github.com/Vanilagy/mediabunny)", "node_modules/mediabunny/LICENSE"],
+  ["Mediabunny AC-3 extension (@mediabunny/ac3)", "MPL-2.0 (source: https://github.com/Vanilagy/mediabunny/tree/main/packages/ac3)",
+    "node_modules/@mediabunny/ac3/LICENSE"],
+  // the AC-3 extension's WebAssembly is FFmpeg's AC-3/E-AC-3 decoder and encoder, built as its README describes
+  ["FFmpeg (libavcodec AC-3 and E-AC-3 coders, inside the AC-3 extension)",
+    "LGPL-2.1-or-later (source: https://ffmpeg.org; build steps: https://github.com/Vanilagy/mediabunny/tree/main/packages/ac3)",
+    "site/ffmpeg-LGPL-2.1.txt"],
   ["wavesurfer.js", "BSD-3-Clause", "node_modules/wavesurfer.js/LICENSE"],
   ["Lucide icons", "ISC", "node_modules/lucide-react/LICENSE"],
   ["Inter font", "SIL Open Font License 1.1", "node_modules/@fontsource-variable/inter/LICENSE"],

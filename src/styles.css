@@ -295,6 +295,11 @@ kbd {
 .file-head__name { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -0.015em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-head__meta { display: flex; gap: 6px; flex-wrap: wrap; margin: 0; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .file-head__private { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12.5px; }
+.play-note {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 10px 14px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text-2); font-size: 13.5px; line-height: 1.5;
+}
+.play-note svg { flex: none; margin-top: 2px; color: var(--muted); }
 
 .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; position: relative; z-index: 20; }
 

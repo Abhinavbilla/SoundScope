@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.1.0",
+    "@mediabunny/ac3": "1.61.3",
     "lucide-react": "0.460.0",
     "mediabunny": "^1.61.3",
     "onnxruntime-web": "^1.30.0",

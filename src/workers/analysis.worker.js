@@ -173,7 +173,7 @@ async function analyseFile({ file, collect, analyse = true, store, streamReader 
     audio.input.dispose();
   }
   await finish(result, writer, reason, audio.channels, file,
-    { openMs, totalMs: performance.now() - t0, bytesRead: audio.bytesRead(), fileBytes: file.size }, audio.hasVideo);
+    { openMs, totalMs: performance.now() - t0, bytesRead: audio.bytesRead(), fileBytes: file.size }, audio.hasVideo, audio.codec);
 }
 
 /** Fallback path: samples were decoded on the main thread. */
@@ -209,13 +209,14 @@ function errorFor(e) {
   return { type: "error", kind: "unsupported", message: "This file couldn't be read. It may be damaged.", detail: String(e) };
 }
 
-async function finish(result, writer, storeReason, channels, file, timings, hasVideo = false) {
+async function finish(result, writer, storeReason, channels, file, timings, hasVideo = false, codec = null) {
   const { runner } = result;
   const tSave = performance.now();
   const summary = writer
     ? await writer.finish({
       modelId: MODEL.id, stepSeconds: MODEL.stepSeconds, duration: result.seconds, channels,
       peaksPerSecond: PEAKS_PER_SECOND, fileName: file?.name, fileSize: file?.size, lastModified: file?.lastModified, hasVideo,
+      codec, // the player needs it after a reopen: the browser may not play every sound format we can analyse
     }, result.peaks)
     : null;
   const msg = {
@@ -224,6 +225,7 @@ async function finish(result, writer, storeReason, channels, file, timings, hasV
     rows: summary?.rows ?? 0,
     channels,
     hasVideo,
+    codec,
     classMax: summary?.classMax ?? null,
     overviewTail: summary?.overviewTail ?? new Uint8Array(0),
     stored: !!writer?.persisted,

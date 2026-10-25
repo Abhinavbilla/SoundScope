@@ -84,6 +84,18 @@ Audio: WAV, MP3, M4A, AAC, FLAC and OGG. Video: MP4, MOV, WebM, MKV and MPEG-TS 
 
 Tested: all six formats work in Edge and Chrome, and decode in Firefox. Stock Firefox 158: all six work, including a 60 min WAV (7.1 min, about 960 MB page memory, about 1.3–2× slower than Edge). Playwright's WebKit on Windows only decodes WAV and shows the message for the rest, but that isn't Safari. Real Safari is not tested yet.
 
+Dolby Digital sound (AC-3 / E-AC-3, 2026-10-25). A user's movie MKV failed in Chrome on a Mac. The message also told them to "try Chrome or Edge", though they were already on Chrome.
+- **Analysis:** `@mediabunny/ac3` (FFmpeg's decoder in WebAssembly, 1.1 MB, MPL-2.0 + LGPL-2.1) is loaded by `stream.js` only when a Dolby track can't be decoded natively. It's in its own chunk, so normal visits don't download it. It runs in a blob worker, which the CSP already allows (`worker-src blob:`, `wasm-unsafe-eval`).
+- **Playback:** the browser's player still can't play Dolby in Chrome or Firefox, or in Chrome on a Mac. The picture plays silently, and a note says so and suggests bookmarking a moment and downloading its clip (clips decode through the same extension). The codec is saved with the results, so the note also shows after a reopen. Edge on Windows decodes and plays Dolby itself, so nothing is downloaded and no note shows. Any other file the player rejects gets a general version of the note.
+- **Message:** for a format that still can't be read, it now says "uses a sound format (X) that SoundScope can't read. Convert it to MP4 or MP3", without naming browsers.
+- **Tested** with `tools/make-dolby-sample.mjs` (makes Dolby files with the extension's encoder, no ffmpeg) and `tools/check-dolby.mjs`, in Chrome and Edge:
+  - AC-3 MKV, E-AC-3 MP4 and an H.264 + AC-3 MKV video all analyse;
+  - 7 of the top 8 sounds match the original WAV;
+  - clips have sound;
+  - the note shows in Chrome, and again after a reopen.
+
+  `check-site.mjs` (Chrome, with the Dolby video) and `check-ui-controls.mjs` still pass.
+
 ## Licenses
 
 - **EfficientSED (current model):** MIT (theMoro/EfficientSED, copyright (c) 2024 Florian Schmid). The Hugging Face copy includes the licence and credits the paper: Morocutti, Schmid, Greif, Foscarin, Widmer, "Exploring Performance-Complexity Trade-Offs in Sound Event Detection Models", EUSIPCO 2025. The app's credits say the same.

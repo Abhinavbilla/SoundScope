@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AudioLines, Bookmark, Check, Clapperboard, ListMusic, Lock, Play, Star } from "lucide-react";
+import { AudioLines, Bookmark, Check, Clapperboard, ListMusic, Lock, Play, Star, VolumeX } from "lucide-react";
 import { readClass } from "../store/scoreStore.js";
 import { bookmarksPersist, deleteBookmark, fileKey, listBookmarks, saveBookmark } from "../store/bookmarks.js";
 import { encodeScore } from "../model/config.js";
@@ -26,12 +26,23 @@ const soundRow = (c, labels) => ({ key: `s${c}`, label: labels[c], classes: [c],
 const groupRow = (query, classes) => ({ key: `q:${query}`, label: `“${query}”`, classes, group: true, color: GROUP_COLOR });
 
 /**
+ * Whether the browser's own player can play this sound format. SoundScope decodes Dolby Digital itself
+ * for the analysis, but playback uses the browser's <audio>/<video>, which on most browsers can't.
+ */
+const DOLBY_TYPES = { ac3: 'audio/mp4; codecs="ac-3"', eac3: 'audio/mp4; codecs="ec-3"' };
+function browserPlays(codec) {
+  const type = DOLBY_TYPES[codec];
+  if (!type) return true;
+  return !!globalThis.MediaSource?.isTypeSupported?.(type) || document.createElement("audio").canPlayType(type) !== "";
+}
+
+/**
  * The workspace for one file: search, sensitivity, the player with timeline lanes, the selected
  * sound's moments, bookmarks and the sounds in the recording.
  * While the analysis runs (`live`), everything uses the growing 1-second overview and there's no
  * player yet. Afterwards, rows on the timeline use full 40 ms detail read from storage (when saved).
  */
-export default function Results({ file, labels, duration, overview, live, store, peaks, hasVideo, theme, player, onPlayer }) {
+export default function Results({ file, labels, duration, overview, live, store, peaks, hasVideo, codec, theme, player, onPlayer }) {
   const classes = labels.length;
   const [threshold, setThreshold] = useState(THRESHOLD.start);
   const [selected, setSelected] = useState(null); // array of rows, null = not chosen yet
@@ -43,6 +54,7 @@ export default function Results({ file, labels, duration, overview, live, store,
   const [more, setMore] = useState({ key: null, n: MOMENTS_STEP }); // moments shown, per row
   const [detail, setDetail] = useState(() => new Map()); // row key -> full-detail timeline
   const [marks, setMarks] = useState({ key: null, list: [], persist: true }); // this file's bookmarks
+  const [playFailed, setPlayFailed] = useState(false); // the browser's player rejected the file
   const searchRef = useRef(null);
   const videoRef = useRef(null);
 
@@ -202,6 +214,7 @@ export default function Results({ file, labels, duration, overview, live, store,
   );
 
   const stage = hasVideo && !live; // video: picture next to the moments, timeline under both
+  const silent = !live && (playFailed || !browserPlays(codec));
 
   const momentsPanel = (
     <section className="card panel moments-panel">
@@ -336,6 +349,18 @@ export default function Results({ file, labels, duration, overview, live, store,
         </div>
       </div>
 
+      {silent && (
+        <p className="play-note" role="status">
+          <VolumeX size={16} aria-hidden="true" />
+          <span>
+            {browserPlays(codec)
+              ? "This browser can't play this file, so the timeline won't play it."
+              : `This browser can't play Dolby Digital sound, so ${hasVideo ? "the video plays without sound" : "the timeline won't play it"}.`}
+            {" "}The sounds found are complete. To listen to a moment, bookmark it and download the clip.
+          </span>
+        </p>
+      )}
+
       {stage && (
         <div className="stage">
           <div className="stage__video">
@@ -368,6 +393,7 @@ export default function Results({ file, labels, duration, overview, live, store,
             markers={moments}
             markerColor={activeRow?.color}
             onReady={onPlayer}
+            onCantPlay={() => setPlayFailed(true)}
           >
             {lanes}
           </Player>

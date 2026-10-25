@@ -218,6 +218,7 @@ export default function App() {
             store={busy ? null : state.audio.store}
             peaks={busy ? null : state.peaks}
             hasVideo={busy ? false : state.audio.hasVideo}
+            codec={busy ? null : state.audio.codec}
             theme={theme}
             player={busy ? null : player}
             onPlayer={setPlayer}
@@ -232,7 +233,7 @@ export default function App() {
           <p>
             Sound recognition: EfficientSED (fmn10 + transformer) by Morocutti, Schmid, Greif, Foscarin and Widmer,
             built on PretrainedSED (MIT). Sound categories: AudioSet ontology by Google (CC BY-SA 4.0). File reading: Mediabunny (MPL-2.0).
-            Waveform: wavesurfer.js. Icons: Lucide. Font: Inter.{" "}
+            Dolby Digital sound: FFmpeg (LGPL-2.1), through Mediabunny's AC-3 extension. Waveform: wavesurfer.js. Icons: Lucide. Font: Inter.{" "}
             <a href="/THIRD-PARTY-NOTICES.txt" target="_blank" rel="noopener">Full licences</a>
           </p>
         </details>
