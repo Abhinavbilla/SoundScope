@@ -29,7 +29,8 @@ const groupRow = (query, classes) => ({ key: `q:${query}`, label: `â€œ${query}â€
 
 /**
  * Whether the browser's own player can play this sound format. SoundScope decodes Dolby Digital itself
- * for the analysis, but playback uses the browser's <audio>/<video>, which on most browsers can't.
+ * for the analysis, and for a video plays it alongside the picture (audio/dolbyPlayback.js); an
+ * audio-only Dolby file uses the browser's <audio>, which on most browsers can't play it.
  */
 const DOLBY_TYPES = { ac3: 'audio/mp4; codecs="ac-3"', eac3: 'audio/mp4; codecs="ec-3"' };
 function browserPlays(codec) {
@@ -57,6 +58,7 @@ export default function Results({ file, labels, duration, overview, live, store,
   const [detail, setDetail] = useState(() => new Map()); // row key -> full-detail timeline
   const [marks, setMarks] = useState({ key: null, list: [], persist: true }); // this file's bookmarks
   const [playFailed, setPlayFailed] = useState(false); // the browser's player rejected the file
+  const [dolby, setDolby] = useState("off"); // a video's Dolby sound played by SoundScope: off, loading, on, failed
   const searchRef = useRef(null);
   const videoRef = useRef(null);
 
@@ -69,6 +71,19 @@ export default function Results({ file, labels, duration, overview, live, store,
     })().catch(() => {});
     return () => { stale = true; };
   }, [file]);
+
+  // A video whose Dolby sound the browser can't play: SoundScope plays the sound itself, following the picture.
+  const ownSound = hasVideo && !live && !!codec && !browserPlays(codec);
+  useEffect(() => {
+    if (!ownSound || !player || !videoRef.current) return;
+    let gone = false, sound = null;
+    setDolby("loading");
+    import("../audio/dolbyPlayback.js")
+      .then((m) => m.attachDolbySound(file, videoRef.current))
+      .then((s) => { if (gone) s.detach(); else { sound = s; setDolby("on"); } })
+      .catch(() => { if (!gone) setDolby("failed"); });
+    return () => { gone = true; sound?.detach(); setDolby("off"); };
+  }, [ownSound, player, file]);
 
   // Keyboard: Space play/pause, arrows skip, "/" or Ctrl+K search.
   useEffect(() => {
@@ -223,7 +238,7 @@ export default function Results({ file, labels, duration, overview, live, store,
   );
 
   const stage = hasVideo && !live; // video: picture next to the moments, timeline under both
-  const silent = !live && (playFailed || !browserPlays(codec));
+  const silent = !live && dolby !== "on" && dolby !== "loading" && (playFailed || !browserPlays(codec));
 
   const momentsPanel = (
     <section className="card panel moments-panel">
@@ -299,6 +314,7 @@ export default function Results({ file, labels, duration, overview, live, store,
           onRemove={(b) => updateMarks(() => deleteBookmark(b.id))}
           onRestore={(b) => updateMarks(() => saveBookmark(b))}
           onAddHere={markHere}
+          hasVideo={hasVideo}
         />
       )}
     </section>
@@ -362,9 +378,11 @@ export default function Results({ file, labels, duration, overview, live, store,
         <p className="play-note" role="status">
           <VolumeX size={16} aria-hidden="true" />
           <span>
-            {browserPlays(codec)
-              ? "This browser can't play this file, so the timeline won't play it."
-              : `This browser can't play Dolby Digital sound, so ${hasVideo ? "the video plays without sound" : "the timeline won't play it"}.`}
+            {dolby === "failed"
+              ? "The video's Dolby Digital sound couldn't be played, so the video plays without sound. Check your internet connection and open the file again."
+              : browserPlays(codec)
+                ? "This browser can't play this file, so the timeline won't play it."
+                : `This browser can't play Dolby Digital sound, so ${hasVideo ? "the video plays without sound" : "the timeline won't play it"}.`}
             {" "}The sounds found are complete. To listen to a moment, bookmark it and download the clip.
           </span>
         </p>

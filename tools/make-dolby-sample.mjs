@@ -3,7 +3,8 @@
 // because decoding the source sound needs WebCodecs.
 // Usage: node tools/make-dolby-sample.mjs <input audio or video> <output .mkv or .mp4> [ac3|eac3] [sound file]
 //   sound file: use this file's sound instead (e.g. for a video that has none), cut to the video's length
-// Env: SS_BROWSER=msedge|chrome
+// Env: SS_BROWSER=msedge|chrome, SS_LOOP=1 (with a sound file: repeat the picture to the sound's length,
+//      e.g. for a long test movie)
 import { chromium } from "playwright-core";
 import fs from "node:fs";
 import http from "node:http";
@@ -40,7 +41,7 @@ try {
   await tab.setContent(page + `<input type="file" id="f"><input type="file" id="s">`);
   await tab.setInputFiles("#f", input);
   if (sound) await tab.setInputFiles("#s", sound);
-  const bytes = await tab.evaluate(async ({ codec, mkv }) => {
+  const bytes = await tab.evaluate(async ({ codec, mkv, loop }) => {
     const mb = await import("mediabunny");
     const { registerAc3Encoder } = await import("/ac3.mjs");
     registerAc3Encoder();
@@ -56,12 +57,13 @@ try {
       });
       if (!conversion.isValid) throw new Error(JSON.stringify(conversion.discardedTracks.map((t) => t.reason)));
       await conversion.execute();
-      return [...new Uint8Array(target.buffer)];
+      return (window.__out = new Uint8Array(target.buffer)).length;
     }
     // picture from the first file (copied), sound from the second (encoded), cut to the picture's length
     const video = await open("f").getPrimaryVideoTrack();
     const audio = await open("s").getPrimaryAudioTrack();
-    const end = await video.computeDuration();
+    const clipEnd = await video.computeDuration();
+    const end = loop ? await audio.computeDuration() : clipEnd;
     const pictures = new mb.EncodedVideoPacketSource(await video.getCodec());
     const sounds = new mb.AudioSampleSource({ codec, bitrate: 192_000 });
     output.addVideoTrack(pictures);
@@ -69,19 +71,31 @@ try {
     await output.start();
     const decoderConfig = await video.getDecoderConfig();
     let first = true;
-    for await (const packet of new mb.EncodedPacketSink(video).packets()) {
-      await pictures.add(packet, first ? { decoderConfig } : undefined);
-      first = false;
+    for (let offset = 0; offset < end; offset += clipEnd) { // once, or repeated to the sound's length
+      for await (const packet of new mb.EncodedPacketSink(video).packets()) {
+        if (packet.timestamp + offset >= end) break;
+        await pictures.add(offset ? packet.clone({ timestamp: packet.timestamp + offset }) : packet, first ? { decoderConfig } : undefined);
+        first = false;
+      }
     }
     for await (const sample of new mb.AudioSampleSink(audio).samples(0, end)) {
       await sounds.add(sample);
       sample.close();
     }
     await output.finalize();
-    return [...new Uint8Array(target.buffer)];
-  }, { codec, mkv: output.toLowerCase().endsWith(".mkv") });
-  fs.writeFileSync(output, Buffer.from(bytes));
-  console.log(`${output}: ${(bytes.length / 1e6).toFixed(1)} MB, sound ${codec}`);
+    return (window.__out = new Uint8Array(target.buffer)).length;
+  }, { codec, mkv: output.toLowerCase().endsWith(".mkv"), loop: !!process.env.SS_LOOP });
+  // fetch the file in base64 pieces (a plain array of numbers is very slow for big files)
+  const parts = [];
+  for (let at = 0; at < bytes; at += 4 << 20) {
+    parts.push(Buffer.from(await tab.evaluate(([at, n]) => {
+      let s = "";
+      for (const b of window.__out.subarray(at, at + n)) s += String.fromCharCode(b);
+      return btoa(s);
+    }, [at, 4 << 20]), "base64"));
+  }
+  fs.writeFileSync(output, Buffer.concat(parts));
+  console.log(`${output}: ${(bytes / 1e6).toFixed(1)} MB, sound ${codec}`);
 } finally {
   await browser.close();
   server.close();

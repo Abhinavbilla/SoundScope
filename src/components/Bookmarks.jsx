@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { BookmarkPlus, FileSpreadsheet, Music2, Play, Scissors, Trash2 } from "lucide-react";
+import { BookmarkPlus, FileSpreadsheet, Film, Music2, Play, Scissors, Trash2 } from "lucide-react";
 import { formatTime } from "../results/format.js";
-import { bookmarksCsv, ClipError, clipSaver, csvName, download, makeClips } from "../export/exportFiles.js";
+import { bookmarksCsv, ClipError, clipSaver, csvName, download, makeClips, makeVideoClip } from "../export/exportFiles.js";
 import { toast } from "./Toasts.jsx";
 
 /**
  * Saved moments for this file: play, add a note, remove, and export (CSV, or WAV clips with 1 s of
- * padding, one file per clip).
+ * padding, one file per clip; for a video, also one moment as an MP4 clip with picture and sound).
  */
-export default function Bookmarks({ file, duration, bookmarks, persist, canPlay, onPlay, onNote, onRemove, onRestore, onAddHere }) {
+export default function Bookmarks({ file, duration, bookmarks, persist, canPlay, onPlay, onNote, onRemove, onRestore, onAddHere, hasVideo }) {
   const [busy, setBusy] = useState(false);
 
   async function clips(list) {
@@ -25,6 +25,23 @@ export default function Bookmarks({ file, duration, bookmarks, persist, canPlay,
       toast({
         id, tone: "error", title: list.length === 1 ? "Clip not saved" : "Clips not saved",
         text: e instanceof ClipError ? e.message : "Something went wrong while cutting the sound. Please try again.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function videoClip(b) {
+    setBusy(true);
+    const id = "clips";
+    try {
+      toast({ id, tone: "progress", title: "Making the video clip…" });
+      await makeVideoClip(file, b, duration, (p) => toast({ id, tone: "progress", title: `Making the video clip… ${Math.round(p * 100)}%` }));
+      toast({ id, tone: "success", title: "Video clip saved" });
+    } catch (e) {
+      toast({
+        id, tone: "error", title: "Video clip not saved",
+        text: e instanceof ClipError ? e.message : "Something went wrong while making the video clip. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -64,7 +81,7 @@ export default function Bookmarks({ file, duration, bookmarks, persist, canPlay,
       ) : (
         <ol className="bookmarks__list">
           {bookmarks.map((b) => (
-            <li key={b.id} className="bookmark">
+            <li key={b.id} className={`bookmark ${hasVideo ? "bookmark--video" : ""}`}>
               <button type="button" className="moment bookmark__time" disabled={!canPlay} onClick={() => onPlay(b.start, b.end)}>
                 <span><Play size={12} className="moment__play" fill="currentColor" aria-hidden="true" />{formatTime(b.start)} – {formatTime(b.end)}</span>
                 <span className="muted">{b.label || "Your bookmark"}</span>
@@ -81,6 +98,11 @@ export default function Bookmarks({ file, duration, bookmarks, persist, canPlay,
               <button type="button" className="button button--sm" disabled={busy} onClick={() => clips([b])} title="Download this moment as a sound file">
                 <Scissors size={14} /> Clip
               </button>
+              {hasVideo && (
+                <button type="button" className="button button--sm" disabled={busy} onClick={() => videoClip(b)} title="Download this moment as a video (MP4) with picture and sound">
+                  <Film size={14} /> Video
+                </button>
+              )}
               <button type="button" className="bookmark__remove" aria-label={`Delete bookmark at ${formatTime(b.start)}`} title="Delete bookmark"
                 onClick={() => remove(b)}>
                 <Trash2 size={15} />

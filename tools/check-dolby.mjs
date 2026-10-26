@@ -1,7 +1,8 @@
 // Check files with Dolby Digital sound (AC-3 / E-AC-3, e.g. made by tools/make-dolby-sample.mjs): they
-// analyse through the AC-3 extension, which is only downloaded when such a file is opened; the "can't play
-// this sound" note shows when the browser's player can't play it; a bookmarked moment downloads as a clip
-// with real sound in it. With a reference file (the same recording in a normal format), the sounds found
+// analyse through the AC-3 extension, which is only downloaded when such a file is opened; a video plays
+// with its sound even where the browser's player can't play Dolby (SoundScope plays it, in time with the
+// picture, also after seeking and at 1.5x); an audio-only file shows the "can't play" note instead; a
+// bookmarked moment downloads as a clip with real sound in it. With a reference file (the same recording in a normal format), the sounds found
 // are compared.
 // Usage: node tools/check-dolby.mjs <outDir> <dolby file> [reference file]
 // Env: SS_BASE (default http://localhost:4173), SS_BROWSER=msedge|chrome
@@ -60,18 +61,38 @@ if (refSounds) {
 }
 
 const plays = await page.evaluate(() => ["ac-3", "ec-3"].some((c) => MediaSource.isTypeSupported(`audio/mp4; codecs="${c}"`)));
+const ownSound = r.hasVideo && !plays; // SoundScope plays the sound itself
+if (ownSound) await page.waitForFunction(() => window.__soundscopeDolby, null, { timeout: 30_000 }).catch(() => {});
 const note = await page.locator(".play-note").textContent().catch(() => null);
-ok(plays ? !note : /can't play/.test(note ?? ""), plays ? "browser plays Dolby sound: no note" : `note shown: "${note?.trim()}"`);
+ok(plays || ownSound ? !note : /can't play/.test(note ?? ""),
+  plays ? "browser plays Dolby sound: no note" : ownSound ? `video: SoundScope plays the sound, no note${note ? ` (shown: "${note.trim()}")` : ""}` : `note shown: "${note?.trim()}"`);
 
 if (r.hasVideo) {
-  const picture = await page.evaluate(async () => {
+  // play, then seek, then 1.5x: sound keeps time with the picture each time
+  const run = (from, rate) => page.evaluate(async ([from, rate]) => {
     const v = document.querySelector("video");
-    window.__soundscopePlayer.playFrom(1);
-    await new Promise((res) => setTimeout(res, 1500));
+    v.playbackRate = rate;
+    window.__soundscopePlayer.playFrom(from);
+    const drifts = [];
+    for (let i = 0; i < 8; i++) {
+      await new Promise((res) => setTimeout(res, 400));
+      const d = window.__soundscopeDolby?.drift();
+      if (d != null && i > 1) drifts.push(d); // after the start-up
+    }
+    const out = { error: v.error?.code ?? null, time: v.currentTime, drifts, stats: { ...window.__soundscopeDolby?.stats } };
     v.pause();
-    return { error: v.error?.code ?? null, time: v.currentTime };
-  });
-  console.log(`      picture: ${picture.error ? `player error ${picture.error}` : `plays (at ${picture.time.toFixed(1)} s after 1.5 s from 1 s)`}`);
+    return out;
+  }, [from, rate]);
+  for (const [from, rate] of [[1, 1], [Math.min(20, r.duration / 2), 1], [3, 1.5]]) {
+    const p = await run(from, rate);
+    const worst = p.drifts.length ? Math.max(...p.drifts.map(Math.abs)) : null;
+    if (ownSound) {
+      ok(!p.error && p.stats.scheduled > 0 && p.stats.loudest > 0.01 && worst !== null && worst < 0.1,
+        `from ${from.toFixed(1)} s at ${rate}x: picture at ${p.time.toFixed(1)} s, sound scheduled (${p.stats.scheduled} pieces, peak ${(p.stats.loudest ?? 0).toFixed(2)}), worst gap to picture ${worst === null ? "none measured" : `${(worst * 1000).toFixed(0)} ms`}`);
+    } else {
+      console.log(`      picture: ${p.error ? `player error ${p.error}` : `plays (at ${p.time.toFixed(1)} s from ${from} s)`}`);
+    }
+  }
 }
 
 // a moment as a clip: real sound, not silence

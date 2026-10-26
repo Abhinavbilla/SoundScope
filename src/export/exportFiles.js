@@ -1,5 +1,6 @@
 // Export bookmarks: a CSV, and WAV clips (one file per clip, no zip). Clips are cut in a worker that
-// decodes only the seconds each clip needs.
+// decodes only the seconds each clip needs. For a video, a bookmark can also be saved as an MP4 clip
+// with picture and sound (videoClip.worker.js).
 import { formatTime } from "../results/format.js";
 import { encodeWav } from "./wav.js";
 
@@ -114,6 +115,36 @@ export function makeClips(file, bookmarks, duration, save, onProgress) {
     };
     worker.onerror = (e) => fail(e);
     worker.postMessage({ file, clips });
+  });
+}
+
+const VIDEO_CLIP_MAX = 10 * 60; // seconds: longer moments would need too much memory as one video file
+
+/**
+ * Cut one bookmark (+/- CLIP_PADDING) out of a video as an MP4 with picture and sound, and download it.
+ * @returns {Promise<void>} rejects with a ClipError
+ */
+export function makeVideoClip(file, b, duration, onProgress) {
+  const start = Math.max(0, b.start - CLIP_PADDING), end = Math.min(duration, b.end + CLIP_PADDING);
+  if (end - start > VIDEO_CLIP_MAX) {
+    return Promise.reject(new ClipError("This moment is longer than 10 minutes, too long for a video clip. You can still download the sound clip."));
+  }
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL("../workers/videoClip.worker.js", import.meta.url), { type: "module" });
+    const fail = (e) => {
+      worker.terminate();
+      reject(e instanceof ClipError ? e : new ClipError("Something went wrong while making the video clip. Please try again.", { cause: e }));
+    };
+    worker.onmessage = ({ data }) => {
+      if (data.type === "progress") onProgress?.(data.value);
+      else if (data.type === "done") {
+        worker.terminate();
+        download(clipName(file.name, b).replace(/\.wav$/, ".mp4"), data.bytes, "video/mp4");
+        resolve();
+      } else fail(new ClipError(data.message)); // the worker's messages are written for people
+    };
+    worker.onerror = (e) => fail(e);
+    worker.postMessage({ file, start, end });
   });
 }
 

@@ -96,6 +96,18 @@ Dolby Digital sound (AC-3 / E-AC-3, 2026-10-25). A user's movie MKV failed in Ch
 
   `check-site.mjs` (Chrome, with the Dolby video) and `check-ui-controls.mjs` still pass.
 
+Dolby sound in videos (2026-10-26). Movies now play with their sound where the browser's player can't play Dolby.
+- **How:** `src/audio/dolbyPlayback.js` (loaded only for such a video) decodes the sound with the same AC-3 extension on the page (FFmpeg runs in its own worker) and plays it through Web Audio. The `<video>` stays in charge: the sound follows its play, pause, seeking and speed changes, scheduled 1.5 s ahead. If the sound and the picture drift more than 0.12 s apart, the sound restarts at the picture's position.
+- **Measured** in Chrome on a 4-minute H.264 + AC-3 movie: the sound stayed within 13–29 ms of the picture (people notice about 45 ms), over 75 s of continuous play and after seeking. It restarted only while playback was starting, never during play.
+- **Limits:** at 1.5× and 2× the sound plays faster with a higher pitch (the browser's own player keeps the pitch). Audio-only Dolby files (no picture) still can't be played and keep the note. If the sound part can't be downloaded, the note says so and suggests checking the connection.
+- **Tested** with `tools/check-dolby.mjs` (sound scheduled, peak level, gap to the picture at 1×, after a seek and at 1.5×) and a new case in `tools/check-error-messages.mjs`. `make-dolby-sample.mjs` can now repeat the picture to a longer sound (`SS_LOOP=1`) to make long test movies.
+
+Video clips (2026-10-26). For a video, each bookmark has a "Video" button next to "Clip". It downloads that moment, with the same 1 s of padding, as an MP4 with picture and sound. The sound clips and "Download all clips" work as before.
+- **How:** `src/workers/videoClip.worker.js` cuts the clip from the original file with Mediabunny's conversion. The picture is copied, not re-encoded, so it keeps the original quality and takes well under a second. The copied part starts at the key frame before the cut, and the file is marked to play from the cut (an MP4 edit list). Chrome and Edge follow it; other players weren't checked. Dolby sound is converted to AAC (Opus if the browser has no AAC encoder), so the clip plays with sound anywhere; other sound is copied when MP4 can hold it. Moments longer than 10 minutes aren't offered as video, to keep memory in check.
+- **Measured** in Chrome and Edge: clips of 4.8–17.6 s were made in 0.3–0.8 s, their length matched the bookmark plus padding within 0.05 s, and they play in the browser with sound. Edge's own Dolby decoder gives 5.1 sound (centre channel only for a mono source), which players mix down.
+- **Layout:** next to the video the bookmarks panel is narrow, so the sound's name goes on a second line under the time.
+- **Tested** with `tools/check-video-clips.mjs` (an H.264 + Opus MP4, a short and a 4-minute H.264 + AC-3 MKV, and an audio file, which has no Video button) and a new case in `check-error-messages.mjs`. Desktop and 390 px screenshots checked, no sideways scrolling.
+
 Error messages (2026-10-25). Every message on screen is written for people and says what to do next. No error names, codes or browser text are ever shown.
 - **Clips:** only the app's own messages are shown. Disk full and unwritable folders get their own messages, and anything else gets "The clips couldn't be made. Please try again."
 - **Bookmarks:** a bookmark that can't be saved shows a message that can be dismissed. It used to fail silently.

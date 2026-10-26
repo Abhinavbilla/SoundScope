@@ -2,9 +2,10 @@
 // names, codes, file paths or stack traces, and each one says what to do next.
 // Cases: empty, damaged and mislabelled files, a video with no sound, the model failing to download or
 // arriving corrupted, the Dolby decoder failing to load, clips that can't be saved or made, a bookmark
-// that can't be saved, and the interface itself crashing.
+// that can't be saved, a video clip that can't be made, and the interface itself crashing.
 // Usage: node tools/check-error-messages.mjs <audio file> [video without sound]
-// Env: SS_BASE (default http://localhost:4173), SS_BROWSER=msedge|chrome (chrome for the Dolby case)
+// Env: SS_BASE (default http://localhost:4173), SS_BROWSER=msedge|chrome (chrome for the Dolby cases),
+//      SS_DOLBY_FILE (a Dolby file), SS_DOLBY_VIDEO (a video with Dolby sound)
 import { chromium } from "playwright-core";
 import fs from "node:fs";
 import os from "node:os";
@@ -88,6 +89,23 @@ if (dolby) {
   const { ctx, page } = await fresh();
   await page.route(/mediabunny-ac3/, (r) => r.abort("internetdisconnected"));
   check("Dolby decoder can't be downloaded", await openError(page, dolby));
+  await ctx.close();
+}
+// ...and for a video: analysed fine, but the part that plays its sound can't be downloaded
+const dolbyVideo = process.env.SS_DOLBY_VIDEO;
+if (dolbyVideo) {
+  const { ctx, page } = await fresh();
+  await page.route(/dolbyPlayback/, (r) => r.abort("internetdisconnected"));
+  await analysed(page, dolbyVideo);
+  await page.waitForSelector(".play-note", { timeout: 30_000 });
+  check("Dolby video sound can't be played", await page.locator(".play-note").innerText());
+  // a video clip that can't be made
+  await page.route(/videoClip\.worker/, (r) => r.abort("failed"));
+  await page.locator(".star").first().click();
+  await page.click('.tab:has-text("Bookmarks")');
+  await page.locator('.bookmark button[title^="Download this moment as a video"]').first().click();
+  await page.waitForSelector(".toast--error", { timeout: 60_000 });
+  check("video clip can't be made", await page.locator(".toast--error").innerText());
   await ctx.close();
 }
 

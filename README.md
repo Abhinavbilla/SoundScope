@@ -13,12 +13,12 @@ Everything runs in your browser. **Your recordings are never uploaded.** The sit
 - **Search that forgives typos.** "dog" also finds barks, howls and growls. "anmal" still finds animal sounds, and "foot steps" finds footsteps.
 - **A "Show" slider** goes from *clear sounds only* to *also faint ones*.
 - **Bookmarks with notes.** Star a moment or mark any point, add a note, and search your notes from the same search bar.
-- **Downloads.** Get a list for Excel, or each bookmark as a sound clip, named after its note.
+- **Downloads.** Get a list for Excel, or each bookmark as a sound clip, named after its note. For a video, a bookmark can also be downloaded as a video clip (MP4 with picture and sound), cut from your file on your device.
 - **Video too.** MP4, MOV, WebM, MKV and TS: the picture plays next to the timeline.
 - **Long files.** Tested up to 10 hours. Results are saved on your device, so reopening a file is instant.
 - **A clean light design** that also works on phone screens.
 
-Formats: MP3, WAV, M4A/AAC, FLAC, OGG/Opus, and the video formats above. Dolby Digital sound (AC-3 / E-AC-3, common in movie MKVs) is decoded by SoundScope itself, because most browsers can't. Its decoder (1.1 MB) is only downloaded when such a file is opened. Most browsers can't *play* Dolby sound either: the video then plays silently, and a note says so. The results are complete, and clips have sound.
+Formats: MP3, WAV, M4A/AAC, FLAC, OGG/Opus, and the video formats above. Dolby Digital sound (AC-3 / E-AC-3, common in movie MKVs) is decoded by SoundScope itself, because most browsers can't. Its decoder (1.1 MB) is only downloaded when such a file is opened. Most browsers can't *play* Dolby sound either, so for a video SoundScope plays the sound itself, in time with the picture. A Dolby file with no picture can't be played in those browsers; a note says so, and its results and clips are complete.
 
 ## How it works
 
@@ -82,8 +82,9 @@ node tools/check-ui-controls.mjs <audio>         # keyboard, buttons, always lig
 node tools/check-seek.mjs <audio or video>       # click / drag on the timeline
 node tools/check-bookmarks.mjs <outDir> <audio>  # bookmarks, notes, downloads
 node tools/check-note-search.mjs <outDir> <audio>
+node tools/check-video-clips.mjs <outDir> <video> [<video> ...] [--audio <audio>]   # MP4 clips: length, picture, sound, plays
 node tools/make-dolby-sample.mjs <audio or video> <out.mkv> [ac3|eac3] [sound file]   # a Dolby test file, no ffmpeg
-SS_BROWSER=chrome node tools/check-dolby.mjs <outDir> <dolby file> [same recording, normal format]
+SS_BROWSER=chrome node tools/check-dolby.mjs <outDir> <dolby file> [same recording, normal format]   # also checks a video's sound keeps time
 node tools/check-error-messages.mjs <audio> [video with no sound]   # breaks things on purpose; every message must be plain, with a next step
 node tools/check-site.mjs <site url> <audio> <video>   # a deployed site: headers, model, no outside requests
 ```

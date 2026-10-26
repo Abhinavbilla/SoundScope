@@ -85,13 +85,15 @@ if (await first.count()) {
   s = await state();
   ok(!s.playing && s.t >= stop - 0.1 && s.t < stop + 0.4, `moment ${start.toFixed(1)}-${end.toFixed(1)} s -> paused at ${s.t.toFixed(2)} s (expected ${stop.toFixed(1)})`);
 
-  // moving the playhead cancels the stop
-  await first.click();
-  await page.waitForTimeout(200);
-  await page.keyboard.press("ArrowRight");
-  await page.waitForTimeout((stop - start) * 1000 + 600);
-  s = await state();
-  ok(s.playing, `skipping during a moment cancels its stop (playing at ${s.t.toFixed(2)} s)`);
-  await pause();
+  // moving the playhead cancels the stop: skip back 5 s, then play on past the moment's end
+  if (stop + 1 < duration) {
+    await first.click();
+    await page.waitForTimeout(200);
+    await page.keyboard.press("ArrowLeft");
+    await page.waitForFunction((t) => window.__soundscopePlayer.time() > t, stop + 0.5, { timeout: (stop - start + 10) * 1000 }).catch(() => {});
+    s = await state();
+    ok(s.playing && s.t > stop + 0.4, `skipping during a moment cancels its stop (still playing at ${s.t.toFixed(2)} s, past ${stop.toFixed(1)} s)`);
+    await pause();
+  }
 }
 await b.close();
