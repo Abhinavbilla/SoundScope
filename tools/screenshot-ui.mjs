@@ -1,6 +1,6 @@
 // Screenshots of every UI state for review: landing, analysing, results, search, bookmarks, error.
 // Needs `vite preview` on :4173. Usage: node tools/screenshot-ui.mjs <outDir> <file> [video file]
-// Env: SS_WIDTH (default 1280), SS_THEME=light|dark (default dark), SS_LOCAL_MODEL=1
+// Env: SS_WIDTH (default 1280), SS_LOCAL_MODEL=1
 import { chromium } from "playwright-core";
 import fs from "node:fs";
 import path from "node:path";
@@ -8,10 +8,9 @@ import path from "node:path";
 const [out, file, video] = process.argv.slice(2);
 fs.mkdirSync(out, { recursive: true });
 const width = Number(process.env.SS_WIDTH) || 1280;
-const theme = process.env.SS_THEME || "dark";
-const tag = `${theme}-${width}`;
+const tag = `${width}`;
 const b = await chromium.launch({ channel: "msedge", headless: false });
-const ctx = await b.newContext({ viewport: { width, height: 900 }, colorScheme: theme, deviceScaleFactor: width < 600 ? 2 : 1 });
+const ctx = await b.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: width < 600 ? 2 : 1 });
 const page = await ctx.newPage();
 await page.addInitScript((local) => {
   window.__soundscopeDebug = true;

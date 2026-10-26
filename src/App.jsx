@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FolderOpen, Laptop, Lock, Moon, Sun, Upload, X } from "lucide-react";
+import { FolderOpen, Lock, Upload, X } from "lucide-react";
 import { openAudioFile } from "./audio/openFile.js";
 import { DecodeError } from "./audio/decode.js";
 import { downsamplePeaks } from "./audio/peaks.js";
@@ -33,33 +33,11 @@ function liveOverview() {
 
 const debug = () => import.meta.env.DEV || window.__soundscopeDebug;
 
-/** Theme choice (system / light / dark), remembered in this browser; returns the choice and what's showing. */
-function useTheme() {
-  const [choice, setChoice] = useState(() => {
-    try { return localStorage.getItem("soundscope-theme") || "system"; } catch { return "system"; }
-  });
-  const [systemDark, setSystemDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const on = (e) => setSystemDark(e.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  useEffect(() => {
-    if (choice === "system") delete document.documentElement.dataset.theme;
-    else document.documentElement.dataset.theme = choice;
-    try { localStorage.setItem("soundscope-theme", choice); } catch { /* private mode */ }
-  }, [choice]);
-  const shown = choice === "system" ? (systemDark ? "dark" : "light") : choice;
-  return [choice, setChoice, shown];
-}
-
 export default function App() {
   const [state, setState] = useState({ status: "idle" });
   if (state.status === "ready" && debug() && window.__soundscopeCrash) throw new Error("test only: interface crash");
   const [dragging, setDragging] = useState(false);
   const [player, setPlayer] = useState(null);
-  const [themeChoice, setThemeChoice, theme] = useTheme();
   if (debug()) {
     window.__soundscopePlayer = player;
     // test only: time clip export on any file without analysing it first
@@ -187,7 +165,6 @@ export default function App() {
           <span className="topbar__private" title="Your file is checked inside this browser. It is never uploaded.">
             <Lock size={13} /> Private: stays on your device
           </span>
-          <ThemeSwitch choice={themeChoice} onChange={setThemeChoice} />
           {!idle && (
             <label htmlFor="file-input" className="button button--primary" role="button" tabIndex={0}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.getElementById("file-input").click(); } }}>
@@ -215,7 +192,6 @@ export default function App() {
             peaks={busy ? null : state.peaks}
             hasVideo={busy ? false : state.audio.hasVideo}
             codec={busy ? null : state.audio.codec}
-            theme={theme}
             player={busy ? null : player}
             onPlayer={setPlayer}
           />
@@ -258,24 +234,6 @@ function Logo() {
       </g>
       <path d="M16.5 6.5v11" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
     </svg>
-  );
-}
-
-function ThemeSwitch({ choice, onChange }) {
-  const options = [
-    ["system", Laptop, "Match system"],
-    ["light", Sun, "Light"],
-    ["dark", Moon, "Dark"],
-  ];
-  return (
-    <div className="segmented" role="radiogroup" aria-label="Theme">
-      {options.map(([key, Icon, label]) => (
-        <button key={key} type="button" role="radio" aria-checked={choice === key} className="segmented__item"
-          onClick={() => onChange(key)} title={label} aria-label={label}>
-          <Icon size={14} />
-        </button>
-      ))}
-    </div>
   );
 }
 

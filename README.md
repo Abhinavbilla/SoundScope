@@ -16,7 +16,7 @@ Everything runs in your browser. **Your recordings are never uploaded.** The sit
 - **Downloads.** Get a list for Excel, or each bookmark as a sound clip, named after its note.
 - **Video too.** MP4, MOV, WebM, MKV and TS: the picture plays next to the timeline.
 - **Long files.** Tested up to 10 hours. Results are saved on your device, so reopening a file is instant.
-- **Light and dark themes.** Works on phone screens.
+- **A clean light design** that also works on phone screens.
 
 Formats: MP3, WAV, M4A/AAC, FLAC, OGG/Opus, and the video formats above. Dolby Digital sound (AC-3 / E-AC-3, common in movie MKVs) is decoded by SoundScope itself, because most browsers can't. Its decoder (1.1 MB) is only downloaded when such a file is opened. Most browsers can't *play* Dolby sound either: the video then plays silently, and a note says so. The results are complete, and clips have sound.
 
@@ -78,7 +78,7 @@ Browser checks use Playwright with Edge or Chrome. Most need a test audio or vid
 node tools/test-search.mjs                       # search and typo rules (no browser)
 node tools/test-intervals.mjs                    # how moments are formed (no browser)
 npm run build && npm run preview                 # then, in another terminal:
-node tools/check-ui-controls.mjs <audio>         # keyboard, buttons, theme, no technical values
+node tools/check-ui-controls.mjs <audio>         # keyboard, buttons, always light, no technical values
 node tools/check-seek.mjs <audio or video>       # click / drag on the timeline
 node tools/check-bookmarks.mjs <outDir> <audio>  # bookmarks, notes, downloads
 node tools/check-note-search.mjs <outDir> <audio>

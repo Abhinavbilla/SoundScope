@@ -16,7 +16,7 @@ const HIT_PX = 6; // a pointer this close to a short interval still counts as on
  * track's left column and the lane in the time column (the row itself is `display: contents`).
  * Pressing the lane selects the sound; the player handles seeking for the whole track.
  */
-export default function TimelineRow({ label, color, intervals, duration, threshold, theme, active, onSelect, onRemove }) {
+export default function TimelineRow({ label, color, intervals, duration, threshold, active, onSelect, onRemove }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function TimelineRow({ label, color, intervals, duration, thresho
     const ro = new ResizeObserver(draw);
     ro.observe(canvas);
     return () => ro.disconnect();
-  }, [intervals, duration, threshold, color, theme]);
+  }, [intervals, duration, threshold, color]);
 
   function hit(e) {
     const rect = canvasRef.current.getBoundingClientRect();

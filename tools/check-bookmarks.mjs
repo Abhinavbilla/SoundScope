@@ -4,7 +4,7 @@
 // Usage: node tools/check-bookmarks.mjs <outDir> <file> [<at seconds> ...]
 //   Saves downloads to outDir; with "at" times, also bookmarks those playback positions (for clip checks).
 // Env: SS_BROWSER=msedge|chrome, SS_FOLDER=1 (stand in for the folder picker with an OPFS folder), SS_FALLBACK=1,
-//      SS_LOCAL_MODEL=1 (model from /models/ instead of Hugging Face), SS_WIDTH, SS_DARK=1, SS_SHOT=<png>
+//      SS_LOCAL_MODEL=1 (model from /models/ instead of Hugging Face), SS_WIDTH, SS_SHOT=<png>
 import { chromium } from "playwright-core";
 import fs from "node:fs";
 import os from "node:os";
@@ -16,7 +16,7 @@ const ok = (cond, msg) => console.log(`${cond ? "PASS" : "FAIL"}  ${msg}`);
 const dir = path.join(os.tmpdir(), "ssprobe-bm-" + Date.now());
 const ctx = await chromium.launchPersistentContext(dir, {
   channel: process.env.SS_BROWSER || "msedge", headless: false, acceptDownloads: true,
-  viewport: { width: Number(process.env.SS_WIDTH) || 1100, height: 900 }, colorScheme: process.env.SS_DARK ? "dark" : "light",
+  viewport: { width: Number(process.env.SS_WIDTH) || 1100, height: 900 },
 });
 const page = ctx.pages()[0] || (await ctx.newPage());
 await page.addInitScript(([folder, fallback, local]) => {

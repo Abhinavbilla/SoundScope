@@ -11,7 +11,4 @@ await page.screenshot({ path: `${out}-progress.png` });
 await page.waitForFunction(() => window.__soundscopeLast, null, { timeout: 600000 });
 await page.waitForTimeout(1500);
 await page.screenshot({ path: `${out}-done.png` });
-await page.emulateMedia({ colorScheme: "dark" });
-await page.waitForTimeout(300);
-await page.screenshot({ path: `${out}-done-dark.png` });
 await browser.close();

@@ -1,5 +1,5 @@
 // Checks for the redesigned UI's controls: keyboard shortcuts, transport buttons, playback speed,
-// theme switch (remembered), drop-anywhere, and that no raw scores or technical details are shown.
+// always-light page (even with a dark system setting), drop-anywhere, and that no raw scores or technical details are shown.
 // Needs `vite preview` on :4173. Usage: node tools/check-ui-controls.mjs <file>   Env: SS_LOCAL_MODEL=1
 import { chromium } from "playwright-core";
 import fs from "node:fs";
@@ -68,15 +68,13 @@ await page.click('[aria-label^="Playback speed"]');
 const rate = await page.evaluate(() => document.querySelector('[aria-label^="Playback speed"]').textContent.trim());
 ok(rate === "1.5×", `playback speed button: ${rate}`);
 
-// theme switch, remembered after reload
-await page.click('[role=radio][aria-label="Light"]');
-const light = await page.evaluate(() => document.documentElement.dataset.theme + " " + getComputedStyle(document.body).backgroundColor);
-await page.click('[role=radio][aria-label="Dark"]');
-const dark = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-await page.reload();
-const kept = await page.evaluate(() => document.documentElement.dataset.theme);
-ok(light.startsWith("light") && dark !== light.split(" ").slice(1).join(" ") && kept === "dark", `theme: light (${light}), dark (${dark}), after reload "${kept}"`);
-await page.click('[role=radio][aria-label="Match system"]');
+// always light: the background stays the same with a dark system setting, and there's no theme switch
+const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+await page.emulateMedia({ colorScheme: "dark" });
+const darkBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+await page.emulateMedia({ colorScheme: "light" });
+const switches = await page.locator('[aria-label="Theme"]').count();
+ok(lightBg === darkBg && switches === 0, `always light: ${lightBg} with light system, ${darkBg} with dark system, theme switches: ${switches}`);
 
 // nothing technical on screen: no raw scores, sample rates or timings
 await page.setInputFiles("input[type=file]", file);

@@ -106,7 +106,7 @@ Error messages (2026-10-25). Every message on screen is written for people and s
 **Pop-ups.** Messages appear as small pop-ups in the bottom-right corner (`src/components/Toasts.jsx`): "Couldn't open…" with "Choose another file", clip progress then "N clips saved", "Bookmark deleted" with Undo, and "Bookmark not saved".
 - Each has a title and a line of text, plus an action button where one helps.
 - Errors stay until closed. Others close after 5 s, but not while the mouse or keyboard focus is on them.
-- They use the theme's colours and a short entrance animation (off with reduced motion), and they span the full width on phones.
+- They use the app's colours and a short entrance animation (off with reduced motion), and they span the full width on phones.
 - The Dolby "plays without sound" note stays on the page, because it describes the file, not an event.
 
 `tools/check-error-messages.mjs` breaks things on purpose and rejects any message with technical words or no next step. All 15 cases pass:
@@ -186,7 +186,7 @@ These numbers are from before the switch to frame_mn10 (see "Model switch" above
 
 ## UI redesign (done)
 
-- Dark and light themes, a landing page with a big drop area (or drop anywhere), progress with time left, and a workspace with search, sensitivity, a player whose waveform shows the selected sound's moments, timeline lanes on the same time axis, play controls with keyboard shortcuts, Moments/Bookmarks tabs and colour-coded sound categories.
+- A light design (always white; dark mode was removed on 2026-10-26 at the owner's request), a landing page with a big drop area (or drop anywhere), progress with time left, and a workspace with search, sensitivity, a player whose waveform shows the selected sound's moments, timeline lanes on the same time axis, play controls with keyboard shortcuts, Moments/Bookmarks tabs and colour-coded sound categories.
 - Normal users don't see raw scores (a Maybe/Likely/Very likely meter instead), threshold values, sample rates, processing times or generic background labels (those are behind "Also show background noises" and still searchable).
 - Fonts and icons are bundled, so the page still makes no third-party requests. Credits are in the footer. Details are in `notes/ui.md`.
 - Second pass (2026-10-20): a quieter, tool-like look. Neutral surfaces, one solid blue for the playhead and progress, no gradients or glow. The timeline has sound names in a left column, like an editor. Videos sit next to the moments list, with the timeline below. The landing page shows a small example timeline and three steps.

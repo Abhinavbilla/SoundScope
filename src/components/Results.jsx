@@ -44,7 +44,7 @@ function browserPlays(codec) {
  * While the analysis runs (`live`), everything uses the growing 1-second overview and there's no
  * player yet. Afterwards, rows on the timeline use full 40 ms detail read from storage (when saved).
  */
-export default function Results({ file, labels, duration, overview, live, store, peaks, hasVideo, codec, theme, player, onPlayer }) {
+export default function Results({ file, labels, duration, overview, live, store, peaks, hasVideo, codec, player, onPlayer }) {
   const classes = labels.length;
   const [threshold, setThreshold] = useState(THRESHOLD.start);
   const [selected, setSelected] = useState(null); // array of rows, null = not chosen yet
@@ -211,7 +211,6 @@ export default function Results({ file, labels, duration, overview, live, store,
           intervals={intervalsByRow.get(row.key)}
           duration={duration}
           threshold={threshold}
-          theme={theme}
           active={row.key === activeRow?.key}
           onSelect={() => setActive(row.key)}
           onRemove={() => toggle(row)}
@@ -399,7 +398,6 @@ export default function Results({ file, labels, duration, overview, live, store,
             peaks={peaks}
             duration={duration}
             videoRef={hasVideo ? videoRef : null}
-            theme={theme}
             markers={moments}
             markerColor={activeRow?.color}
             onReady={onPlayer}

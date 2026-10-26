@@ -1,7 +1,7 @@
 // Step 4 checks in a real browser: live results during analysis, sound list, sensitivity slider,
 // timeline rows, playing a moment from its start (list click) or from the clicked point (timeline click), adding/removing rows,
 // reopening saved results. Screenshots go to the scratch dir given as SS_SHOTS (optional).
-// Needs `vite preview` on :4173. Usage: node tools/check-timeline.mjs <file>   Env: SS_BROWSER, SS_WIDTH, SS_DARK=1
+// Needs `vite preview` on :4173. Usage: node tools/check-timeline.mjs <file>   Env: SS_BROWSER, SS_WIDTH
 import { chromium } from "playwright-core";
 import fs from "node:fs";
 import os from "node:os";
@@ -13,7 +13,6 @@ const dir = path.join(os.tmpdir(), "ssprobe-tl-" + Date.now());
 const ctx = await chromium.launchPersistentContext(dir, {
   channel: process.env.SS_BROWSER || "msedge", headless: false,
   viewport: { width: Number(process.env.SS_WIDTH) || 1100, height: 900 },
-  colorScheme: process.env.SS_DARK ? "dark" : "light",
 });
 const page = ctx.pages()[0] || (await ctx.newPage());
 await page.addInitScript((local) => {

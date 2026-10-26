@@ -21,7 +21,7 @@ const RATES = [1, 1.5, 2];
  * (playFrom with `until` pauses there, unless the user moves the playhead first)
  * (null on unmount). `onCantPlay()` is called if the browser can't play the file at all.
  */
-export default function Player({ file, peaks, duration, videoRef = null, theme, markers = [], markerColor, onReady, onCantPlay, children }) {
+export default function Player({ file, peaks, duration, videoRef = null, markers = [], markerColor, onReady, onCantPlay, children }) {
   const video = !!videoRef;
   const containerRef = useRef(null);
   const markersRef = useRef(null);
@@ -101,11 +101,6 @@ export default function Player({ file, peaks, duration, videoRef = null, theme, 
     };
   }, [file, peaks, duration, video]); // onReady is a state setter, videoRef a stable ref
 
-  // Colours follow the theme.
-  useEffect(() => {
-    wsRef.current?.setOptions({ waveColor: cssVar("--wave"), progressColor: cssVar("--wave-progress") });
-  }, [theme]);
-
   // Moments of the selected sound, marked on the waveform.
   useEffect(() => {
     const canvas = markersRef.current;
@@ -132,7 +127,7 @@ export default function Player({ file, peaks, duration, videoRef = null, theme, 
     const ro = new ResizeObserver(draw);
     ro.observe(canvas);
     return () => ro.disconnect();
-  }, [markers, markerColor, duration, theme]);
+  }, [markers, markerColor, duration]);
 
   /** Time under the pointer, or null when it's outside the timeline area (e.g. on a lane's name). */
   function timeAt(e, clampInside = false) {
