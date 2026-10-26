@@ -6,7 +6,6 @@ import { decodeScore, encodeScore } from "../model/config.js";
 export const SETTINGS = {
   mergeGap: 1, // seconds: detections closer than this become one
   minLength: 0.12, // seconds: shorter events are dropped (0.5 s lost short sounds like a single bark; notes/search.md)
-  playBefore: 2, // seconds of playback before an event
 };
 
 // Sensitivity slider: threshold on a log scale. Best thresholds for frame_mn10 (the earlier model) on the TUT street

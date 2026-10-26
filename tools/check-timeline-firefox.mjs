@@ -1,5 +1,5 @@
 // Step 4 checks in stock Firefox (Puppeteer + BiDi): cancel while live results show, then a full run,
-// timeline rows, and playing a moment from 2 s before.
+// timeline rows, and playing a moment from its start.
 // Needs `vite preview` on :4173. Usage: node tools/check-timeline-firefox.mjs <longFile> <file> [screenshot.png]
 import puppeteer from "puppeteer-core";
 import fs from "node:fs";
@@ -64,7 +64,7 @@ await (await page.$$(".moment"))[i].click();
 await new Promise((r) => setTimeout(r, 600));
 const p = await page.evaluate(() => ({ t: window.__soundscopePlayer.time(), playing: window.__soundscopePlayer.playing() }));
 const start = toSec(moments[i].split("–")[0]);
-ok(last.ok && rows.length > 0 && p.playing && Math.abs(p.t - Math.max(0, start - 2)) < 1.2,
+ok(last.ok && rows.length > 0 && p.playing && p.t >= start - 0.1 && p.t < start + 1,
   `full run ${(last.timings.totalMs / 1000).toFixed(1)} s, rows ${JSON.stringify(rows)}, moment at ${start.toFixed(1)} s -> playing from ${p.t.toFixed(2)} s`);
 if (shot) await page.screenshot({ path: shot });
 await browser.close();

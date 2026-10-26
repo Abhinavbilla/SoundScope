@@ -88,7 +88,7 @@ for (const file of files) {
   await page.fill("#search", "");
 }
 
-// play a moment of a combined row: from 2 s before
+// play a moment of a combined row: from its start
 await page.fill("#search", "dog");
 await page.waitForTimeout(200);
 await page.locator(".search__head button").click();
@@ -99,7 +99,7 @@ if (await first.count()) {
   await first.click();
   await page.waitForTimeout(400);
   const p = await page.evaluate(() => ({ t: window.__soundscopePlayer.time(), playing: window.__soundscopePlayer.playing() }));
-  ok(p.playing && Math.abs(p.t - Math.max(0, start - 2)) < 1, `combined row moment at ${start.toFixed(1)} s -> playing from ${p.t.toFixed(2)} s`);
+  ok(p.playing && p.t >= start - 0.1 && p.t < start + 0.6, `combined row moment at ${start.toFixed(1)} s -> playing from ${p.t.toFixed(2)} s`);
 }
 
 console.log("\nTotals (an event counts as found if a moment overlaps it, 1 s slack):");

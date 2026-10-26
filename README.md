@@ -9,7 +9,7 @@ Everything runs in your browser. **Your recordings are never uploaded.** The sit
 ## What it does
 
 - **Finds sounds on a timeline.** Each sound gets its own lane under the waveform. Click or drag anywhere to play from that point.
-- **Lists every moment.** Pick a sound to see each time it happens, how long it lasts, and how sure the app is (Maybe / Likely / Very likely). Clicking a moment plays it from 2 seconds before.
+- **Lists every moment.** Pick a sound to see each time it happens, how long it lasts, and how sure the app is (Maybe / Likely / Very likely). Clicking a moment plays just that moment, from its start to its end.
 - **Search that forgives typos.** "dog" also finds barks, howls and growls. "anmal" still finds animal sounds, and "foot steps" finds footsteps.
 - **A "Show" slider** goes from *clear sounds only* to *also faint ones*.
 - **Bookmarks with notes.** Star a moment or mark any point, add a note, and search your notes from the same search bar.

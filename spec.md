@@ -16,7 +16,7 @@ Mainly people who edit or review long recordings (creators, field recordists). O
 2. Run a pretrained sound-detection model in the browser (no training, no backend).
 3. Turn the model's output into time intervals per sound, with a confidence score.
 4. Show a list of the sounds found in the file, plus search by sound name. Searching "dog" also matches related sounds like bark, howl and growl, using the AudioSet ontology.
-5. Show the intervals on a timeline. Many sounds can happen at the same time, so the timeline has one row per sound or a filter. Clicking an interval plays it from 2 seconds before.
+5. Show the intervals on a timeline. Many sounds can happen at the same time, so the timeline has one row per sound or a filter. Clicking an interval plays it from its start to its end.
 6. A sensitivity slider to get fewer or more detections. It never runs the model again (see "Saved scores" below). Its range is set for the chosen model (see "Sensitivity" below).
 7. Bookmark moments and export them:
    - CSV with columns: start, end, label, confidence, note.
@@ -190,7 +190,7 @@ These numbers are from before the switch to frame_mn10 (see "Model switch" above
 - Normal users don't see raw scores (a Maybe/Likely/Very likely meter instead), threshold values, sample rates, processing times or generic background labels (those are behind "Also show background noises" and still searchable).
 - Fonts and icons are bundled, so the page still makes no third-party requests. Credits are in the footer. Details are in `notes/ui.md`.
 - Second pass (2026-10-20): a quieter, tool-like look. Neutral surfaces, one solid blue for the playhead and progress, no gradients or glow. The timeline has sound names in a left column, like an editor. Videos sit next to the moments list, with the timeline below. The landing page shows a small example timeline and three steps.
-- Click or drag anywhere on the waveform or a sound's lane to play from that point (the picture follows for videos). Clicking a moment in the list still plays from 2 s before it. Checked with `tools/check-seek.mjs` on an audio file and a video; the timeline, controls and bookmark checks still pass.
+- Click or drag anywhere on the waveform or a sound's lane to play from that point (the picture follows for videos). Clicking a moment in the list plays just that moment, from its start to its end. Checked with `tools/check-seek.mjs` on an audio file and a video; the timeline, controls and bookmark checks still pass.
 - Plain wording (2026-10-20): every label, hint and error message was rewritten for people who aren't technical. The sensitivity slider is now "Show: Clear only … Also faint". Errors say what to do next and never show codec names or error codes. About 190 AudioSet names that read like research terms get everyday names in `src/results/names.js` ("Female speech, woman speaking" → "Woman speaking", "Mains hum" → "Electrical hum"). Search matches both the everyday and the original names.
 
 ## Bookmarks and export (done)
@@ -200,7 +200,7 @@ These numbers are from before the switch to frame_mn10 (see "Model switch" above
 - Clips decode only the seconds they need. They line up with ffmpeg's decode of the same file within 0.5 ms (MP3, FLAC, Ogg, AAC, WebM). Ogg Vorbis is read from the start, because seeking in it was 3–23 ms off. A clip from the end of a 10 h MP3 takes about 6 s; from M4A about 0.1 s anywhere.
 - Tested in Edge and Firefox, at phone width and in dark mode. Details are in `notes/bookmarks.md`.
 - Notes (2026-10-21):
-  - **Search:** the search bar finds notes, with the same typo rules as sound names ("ckae" → cake, "neigbor" → neighbour's). Bookmarks whose note has all the typed words (any case, any order) are listed above the sounds, exact matches first, 3 at first; a click plays from 2 s before. When no note matches, search looks as before. A word found in a note isn't turned into a sound-name guess ("mama" stays "mama").
+  - **Search:** the search bar finds notes, with the same typo rules as sound names ("ckae" → cake, "neigbor" → neighbour's). Bookmarks whose note has all the typed words (any case, any order) are listed above the sounds, exact matches first, 3 at first; a click plays the bookmark from its start to its end. When no note matches, search looks as before. A word found in a note isn't turned into a sound-name guess ("mama" stays "mama").
   - **Clip names:** a clip's file name includes its note, shortened to 5 words and 40 characters (`party-Laughter-Riya-laughing-at-the-cake-1-15.2.wav`). Without a note, the name is unchanged.
   - **Delete:** each bookmark has a visible delete (bin) button. It used to be an invisible ✕ that showed only on hover, so a click on empty-looking space deleted the bookmark. After a delete, "Undo" brings it back with its note.
   - Checked with `tools/check-note-search.mjs` at desktop and phone width.
@@ -217,7 +217,7 @@ These numbers are from before the switch to frame_mn10 (see "Model switch" above
 
 - A list of the sounds found, most heard first, with how long each is heard. Tick a sound to add it to the timeline.
 - One timeline row per chosen sound. Until you pick, it shows the 3 most heard sounds that come and go (sounds heard through more than 80% of the file are skipped for the default).
-- The selected row's moments are listed with start, end and confidence. Clicking a moment, or an interval on the timeline, plays from 2 s before (the video too). A line follows playback.
+- The selected row's moments are listed with start, end and confidence. Clicking a moment, or an interval on the timeline, plays it from its start and pauses at its end (at least 1 s, so very short sounds can be heard; the video too). Moving the playhead or skipping cancels the stop. A line follows playback.
 - The sensitivity slider recomputes everything from the saved scores: 4–11 ms on 10 min, 25 ms on 3 h.
 - While the analysis runs, results fill in at 1-second detail; afterwards the timeline uses the full 40 ms detail.
 - Tested in Edge, Chrome and Firefox, at phone width and in dark mode. Not done: per-sound thresholds and zooming the timeline. Details are in `notes/timeline.md`.

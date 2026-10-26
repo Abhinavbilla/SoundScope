@@ -4,7 +4,7 @@ import { readClass } from "../store/scoreStore.js";
 import { bookmarksPersist, deleteBookmark, fileKey, listBookmarks, saveBookmark } from "../store/bookmarks.js";
 import { encodeScore } from "../model/config.js";
 import {
-  column, columnMax, findIntervals, maxOf, positionOf, SETTINGS, soundsHeard, THRESHOLD, thresholdAt,
+  column, columnMax, findIntervals, maxOf, positionOf, soundsHeard, THRESHOLD, thresholdAt,
 } from "../results/intervals.js";
 import { formatAmount, formatDuration, formatTime } from "../results/format.js";
 import { CATEGORIES, categoryOf, colorOf, isGeneric } from "../results/categories.js";
@@ -20,6 +20,7 @@ const BACKGROUND_SHARE = 0.8; // sounds heard in more of the file than this aren
 const LIST_STEP = 24; // sounds listed before "Show all"
 const MOMENTS_STEP = 100; // moments listed before "Show more"
 const MANUAL_LENGTH = 1; // seconds covered by a bookmark set at the playback position
+const MIN_PLAY = 1; // seconds: a moment shorter than this plays for this long
 const GROUP_COLOR = "var(--accent)";
 
 /** A timeline row: one sound, or several sounds combined (a search, e.g. "dog" = Dog, Bark, Howl...). */
@@ -146,8 +147,9 @@ export default function Results({ file, labels, duration, overview, live, store,
     }
   }
 
-  function play(start) {
-    player?.playFrom(start - SETTINGS.playBefore);
+  /** Play a moment from its start to its end (at least MIN_PLAY seconds, so very short sounds can be heard). */
+  function play(start, end) {
+    player?.playFrom(start, Math.max(end, start + MIN_PLAY));
   }
 
   async function updateMarks(change) {
@@ -253,7 +255,7 @@ export default function Results({ file, labels, duration, overview, live, store,
                 const marked = marks.list.some((b) => sameMoment(b, m, label));
                 return (
                   <li key={m.start} className="moments__item">
-                    <button type="button" className="moment" disabled={live || !player} onClick={() => play(m.start)}>
+                    <button type="button" className="moment" disabled={live || !player} onClick={() => play(m.start, m.end)}>
                       <span>
                         <Play size={11} className="moment__play" fill="currentColor" strokeWidth={0} aria-hidden="true" />
                         {formatTime(m.start)} – {formatTime(m.end)}
@@ -336,7 +338,7 @@ export default function Results({ file, labels, duration, overview, live, store,
           onGroup={(q, cs) => toggle(groupRow(q, cs))}
           bookmarks={live ? [] : marks.list}
           canPlay={!!player}
-          onPlayBookmark={(b) => play(b.start)}
+          onPlayBookmark={(b) => play(b.start, b.end)}
         />
         <div className="sens">
           <label htmlFor="sensitivity" className="sens__label" title="Move right to also show fainter or less certain sounds">Show</label>

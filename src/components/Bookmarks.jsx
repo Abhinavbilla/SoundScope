@@ -65,7 +65,7 @@ export default function Bookmarks({ file, duration, bookmarks, persist, canPlay,
         <ol className="bookmarks__list">
           {bookmarks.map((b) => (
             <li key={b.id} className="bookmark">
-              <button type="button" className="moment bookmark__time" disabled={!canPlay} onClick={() => onPlay(b.start)}>
+              <button type="button" className="moment bookmark__time" disabled={!canPlay} onClick={() => onPlay(b.start, b.end)}>
                 <span><Play size={12} className="moment__play" fill="currentColor" aria-hidden="true" />{formatTime(b.start)} – {formatTime(b.end)}</span>
                 <span className="muted">{b.label || "Your bookmark"}</span>
               </button>

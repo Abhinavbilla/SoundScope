@@ -1,5 +1,5 @@
 // Step 4 checks in a real browser: live results during analysis, sound list, sensitivity slider,
-// timeline rows, playing a moment from 2 s before (list click) or from the clicked point (timeline click), adding/removing rows,
+// timeline rows, playing a moment from its start (list click) or from the clicked point (timeline click), adding/removing rows,
 // reopening saved results. Screenshots go to the scratch dir given as SS_SHOTS (optional).
 // Needs `vite preview` on :4173. Usage: node tools/check-timeline.mjs <file>   Env: SS_BROWSER, SS_WIDTH, SS_DARK=1
 import { chromium } from "playwright-core";
@@ -83,7 +83,7 @@ console.log(`      slider move to repaint: ${tSlide.toFixed(0)} ms`);
 await setPos(1 - Math.log(0.05 / 0.001) / Math.log(500)); await page.waitForTimeout(300); // back to 0.05
 s = await state();
 
-// 4. play a moment from the list: starts 2 s before. Use the row with the most moments and a
+// 4. play a moment from the list: starts at its start. Use the row with the most moments and a
 // moment at least 5 s in, so the 2 s lead-in is visible.
 await page.evaluate(() => {
   const labels = [...document.querySelectorAll(".trow__label")];
@@ -100,7 +100,7 @@ if (idx >= 0) {
   await page.locator(".moment").nth(idx).click();
   await page.waitForTimeout(400);
   const p = await page.evaluate(() => ({ t: window.__soundscopePlayer.time(), playing: window.__soundscopePlayer.playing() }));
-  ok(p.playing && p.t >= Math.max(0, start - 2) - 0.05 && p.t < Math.max(0, start - 2) + 1, `list click: moment at ${start.toFixed(1)} s -> playing from ${p.t.toFixed(2)} s`);
+  ok(p.playing && p.t >= start - 0.1 && p.t < start + 1, `list click: moment at ${start.toFixed(1)} s -> playing from ${p.t.toFixed(2)} s`);
   await page.evaluate(() => document.querySelector("video, audio")?.pause?.());
   await page.keyboard.press("Escape");
 }

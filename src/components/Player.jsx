@@ -17,7 +17,8 @@ const RATES = [1, 1.5, 2];
  * element, for a video through the parent's <video> (`videoRef`), which WaveSurfer drives.
  * Pressing anywhere on the waveform or a lane moves the playhead there (drag to scrub) and plays from
  * that point when released.
- * `onReady(player)` gets { playFrom(t), toggle(), skip(s), on(event, fn) -> unsubscribe, time(), playing() }
+ * `onReady(player)` gets { playFrom(t, until?), toggle(), skip(s), on(event, fn) -> unsubscribe, time(), playing() }
+ * (playFrom with `until` pauses there, unless the user moves the playhead first)
  * (null on unmount). `onCantPlay()` is called if the browser can't play the file at all.
  */
 export default function Player({ file, peaks, duration, videoRef = null, theme, markers = [], markerColor, onReady, onCantPlay, children }) {
@@ -56,21 +57,29 @@ export default function Player({ file, peaks, duration, videoRef = null, theme, 
     }
     wsRef.current = ws;
     const clamp = (t) => Math.max(0, Math.min(duration, t));
+    let stopAt = null; // end of the moment being played, if any
     const p = {
-      playFrom(t) {
+      playFrom(t, until = null) {
+        stopAt = until;
         ws.setTime(clamp(t));
         ws.play();
       },
-      seek: (t) => ws.setTime(clamp(t)),
+      seek: (t) => { stopAt = null; ws.setTime(clamp(t)); },
       toggle: () => ws.playPause(),
-      skip: (s) => ws.setTime(clamp(ws.getCurrentTime() + s)),
+      skip: (s) => { stopAt = null; ws.setTime(clamp(ws.getCurrentTime() + s)); },
       setRate: (r) => ws.setPlaybackRate(r, true),
       on: (event, fn) => ws.on(event, fn), // e.g. "timeupdate", "play", "pause"
       time: () => ws.getCurrentTime(),
       playing: () => ws.isPlaying(),
     };
     const moveHead = (t) => { if (playheadRef.current) playheadRef.current.style.left = `${(t / duration) * 100}%`; };
-    const offTime = ws.on("timeupdate", moveHead);
+    const offTime = ws.on("timeupdate", (t) => {
+      moveHead(t);
+      if (stopAt !== null && t >= stopAt) {
+        stopAt = null;
+        ws.pause();
+      }
+    });
     const offSeek = ws.on("seeking", moveHead);
     // The analysis may have read a format the browser's player can't (e.g. Dolby Digital).
     const element = ws.getMediaElement();

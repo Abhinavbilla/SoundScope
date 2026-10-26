@@ -71,15 +71,27 @@ await page.waitForTimeout(400);
 s = await state();
 ok(Math.abs(s.t - before) < 0.05 && !s.playing, `name click: no seek (${before.toFixed(2)} -> ${s.t.toFixed(2)} s), not playing`);
 
-// 5. the moments list still plays from 2 s before a moment
+// 5. the moments list plays just the moment: from its start, pausing at its end (at least 1 s)
 const first = page.locator(".moment").first();
 if (await first.count()) {
   const txt = await first.locator("span").first().textContent();
-  const start = txt.split("–")[0].trim().split(":").reduce((a, v) => a * 60 + Number(v), 0);
+  const [start, end] = txt.split("–").map((p) => p.trim().split(":").reduce((a, v) => a * 60 + Number(v), 0));
+  const stop = Math.max(end, start + 1);
   await first.click();
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(300);
   s = await state();
-  ok(s.playing && Math.abs(s.t - Math.max(0, start - 2)) < 0.8, `moment click at ${start.toFixed(1)} s -> playing from ${s.t.toFixed(2)} s`);
+  ok(s.playing && s.t >= start - 0.1 && s.t < start + 0.6, `moment click at ${start.toFixed(1)} s -> playing from ${s.t.toFixed(2)} s`);
+  await page.waitForFunction(() => !window.__soundscopePlayer.playing(), null, { timeout: (stop - start + 5) * 1000 }).catch(() => {});
+  s = await state();
+  ok(!s.playing && s.t >= stop - 0.1 && s.t < stop + 0.4, `moment ${start.toFixed(1)}-${end.toFixed(1)} s -> paused at ${s.t.toFixed(2)} s (expected ${stop.toFixed(1)})`);
+
+  // moving the playhead cancels the stop
+  await first.click();
+  await page.waitForTimeout(200);
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout((stop - start) * 1000 + 600);
+  s = await state();
+  ok(s.playing, `skipping during a moment cancels its stop (playing at ${s.t.toFixed(2)} s)`);
   await pause();
 }
 await b.close();

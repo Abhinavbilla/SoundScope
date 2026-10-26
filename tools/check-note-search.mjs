@@ -1,5 +1,5 @@
 // Notes in search and clip names: add bookmarks with notes, find them from the search bar (click plays
-// from 2 s before), a note word isn't turned into a sound-name guess, and a clip's file name has the note.
+// from the bookmark's start), a note word isn't turned into a sound-name guess, and a clip's file name has the note.
 // Needs `vite preview` on :4173. Usage: node tools/check-note-search.mjs <outDir> <file> [screenshot.png]
 // Env: SS_LOCAL_MODEL=1, SS_WIDTH
 import { chromium } from "playwright-core";
@@ -53,7 +53,7 @@ await page.click(".note-hit");
 await page.waitForTimeout(500);
 const s = await page.evaluate(() => ({ t: window.__soundscopePlayer.time(), playing: window.__soundscopePlayer.playing(),
   open: !!document.querySelector(".search__results") }));
-ok(s.playing && s.t > 9.5 && s.t < 11.5 && !s.open, `click plays from 2 s before 0:12 -> ${s.t.toFixed(2)} s, results closed: ${!s.open}`);
+ok(s.playing && s.t > 11.9 && s.t < 12.7 && !s.open, `click plays from 0:12 -> ${s.t.toFixed(2)} s, results closed: ${!s.open}`);
 await pause();
 
 await page.fill("#search", "DOG neighbour");
