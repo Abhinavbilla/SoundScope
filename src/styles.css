@@ -74,7 +74,7 @@ kbd {
 .topbar {
   position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 14px; height: 56px;
   padding: 0 max(16px, calc((100vw - 1200px) / 2)); background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
 }
 .brand { display: flex; align-items: center; gap: 9px; }
 .brand__name { font-weight: 650; font-size: 15px; letter-spacing: -0.015em; }
@@ -514,7 +514,7 @@ input[type="range"]::-moz-range-thumb {
 /* drop overlay */
 .dropzone-overlay {
   position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px;
-  background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(4px);
+  background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
 }
 .dropzone-overlay__inner {
   display: grid; justify-items: center; gap: 8px; width: min(480px, 100%); padding: 48px 20px; border-radius: var(--radius); color: var(--text-2);

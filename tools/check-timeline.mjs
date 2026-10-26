@@ -10,6 +10,7 @@ import path from "node:path";
 const file = process.argv[2];
 const shots = process.env.SS_SHOTS;
 const dir = path.join(os.tmpdir(), "ssprobe-tl-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 const ctx = await chromium.launchPersistentContext(dir, {
   channel: process.env.SS_BROWSER || "msedge", headless: false,
   viewport: { width: Number(process.env.SS_WIDTH) || 1100, height: 900 },

@@ -43,7 +43,10 @@ export function openAudioFile(file, { onInfo, onProgress, onModel, onOverview, c
     let path = "stream";
     let key = null;
 
+    let firstStart = null, retried = false; // the stream start message, kept for one retry
+
     function startWorker(message, transfer = []) {
+      if (message.type === "start") firstStart = message;
       worker = new Worker(new URL("../workers/analysis.worker.js", import.meta.url), { type: "module" });
       worker.onmessage = ({ data }) => handle(data);
       worker.onerror = (e) => {
@@ -101,7 +104,13 @@ export function openAudioFile(file, { onInfo, onProgress, onModel, onOverview, c
         case "error": {
           worker.terminate();
           const video = data.hasVideo || looksLikeVideo(file);
-          if (data.kind === "model") reject(new DecodeError("model", data.message, data.detail));
+          if (data.kind === "model" && /out of memory/i.test(data.detail) && firstStart && !retried) {
+            // Safari can refuse the memory the multi-threaded engine asks for: try once more with one thread
+            retried = true;
+            peakParts.length = 0;
+            overviewParts.length = 0;
+            startWorker({ ...firstStart, threads: 1 });
+          } else if (data.kind === "model") reject(new DecodeError("model", data.message, data.detail));
           else if (data.kind === "no-audio") reject(new DecodeError("empty", data.message, data.detail));
           // the browser's whole-file decoder can't read Dolby either, so its message is the useful one
           else if (data.kind === "codec" && (video || data.codec === "ac3" || data.codec === "eac3")) {
@@ -119,7 +128,8 @@ export function openAudioFile(file, { onInfo, onProgress, onModel, onOverview, c
 
     async function fallback(data) {
       if (file.size > FALLBACK_MAX_BYTES && !globalThis.__soundscopeForceFallback) {
-        reject(new DecodeError("unsupported", "This kind of file can't be opened in this browser. Try converting it to MP3 or MP4.", data.detail));
+        reject(new DecodeError("unsupported", data.oldBrowser ? data.message // e.g. old Safari: updating is the fix
+          : "This kind of file can't be opened in this browser. Try converting it to MP3 or MP4.", data.detail));
         return;
       }
       path = "fallback";

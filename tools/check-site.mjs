@@ -3,6 +3,7 @@
 // its hash check, an audio file and a video analyse, a reload takes the model from the cache, and the
 // test-only files aren't published. Usage: node tools/check-site.mjs <base url> <audio file> <video file>
 // Env: SS_BROWSER=msedge|chrome|firefox
+import fs from "node:fs";
 import { chromium, firefox } from "playwright-core";
 import os from "node:os";
 import path from "node:path";
@@ -11,6 +12,7 @@ const [base, audio, video] = process.argv.slice(2);
 const ok = (cond, msg) => { console.log(`${cond ? "PASS" : "FAIL"}  ${msg}`); if (!cond) process.exitCode = 1; };
 const which = process.env.SS_BROWSER || "msedge";
 const dir = path.join(os.tmpdir(), "ssprobe-site-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 const ctx = which === "firefox"
   ? await firefox.launchPersistentContext(dir, { headless: false })
   : await chromium.launchPersistentContext(dir, { channel: which, headless: false });

@@ -16,7 +16,9 @@ const base = process.env.SS_BASE || "http://localhost:4173";
 const ok = (cond, msg) => { console.log(`${cond ? "PASS" : "FAIL"}  ${msg}`); if (!cond) process.exitCode = 1; };
 fs.mkdirSync(outDir, { recursive: true });
 
-const ctx = await chromium.launchPersistentContext(path.join(os.tmpdir(), "ssprobe-dolby-" + Date.now()),
+const dir = path.join(os.tmpdir(), "ssprobe-dolby-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
+const ctx = await chromium.launchPersistentContext(dir,
   { channel: process.env.SS_BROWSER || "msedge", headless: false, acceptDownloads: true });
 const page = ctx.pages()[0] || (await ctx.newPage());
 await page.addInitScript(() => {

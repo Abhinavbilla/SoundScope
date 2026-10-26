@@ -10,7 +10,9 @@ import path from "node:path";
 const [outDir, file, shot] = process.argv.slice(2);
 fs.mkdirSync(outDir, { recursive: true });
 const ok = (cond, msg) => { console.log(`${cond ? "PASS" : "FAIL"}  ${msg}`); if (!cond) process.exitCode = 1; };
-const ctx = await chromium.launchPersistentContext(path.join(os.tmpdir(), "ssprobe-notes-" + Date.now()), {
+const dir = path.join(os.tmpdir(), "ssprobe-notes-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
+const ctx = await chromium.launchPersistentContext(dir, {
   channel: "msedge", headless: false, acceptDownloads: true, viewport: { width: Number(process.env.SS_WIDTH) || 1280, height: 900 },
 });
 const page = ctx.pages()[0] || (await ctx.newPage());

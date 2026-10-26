@@ -270,6 +270,9 @@ export async function ensureSpace(need, keepKey) {
   };
   if ((await free()) > need + margin) return true;
   const d = await dir();
+  // copies made for playback go first: they can always be made again
+  await (await navigator.storage.getDirectory()).removeEntry("playable", { recursive: true }).catch(() => {});
+  if ((await free()) > need + margin) return true;
   const metas = (await listMetas(d)).filter((m) => m.key !== keepKey);
   metas.sort((a, b) => (a.meta ? a.meta.lastUsed : -1) - (b.meta ? b.meta.lastUsed : -1));
   for (const m of metas) {

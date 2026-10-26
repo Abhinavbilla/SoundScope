@@ -59,6 +59,9 @@ export default function Results({ file, labels, duration, overview, live, store,
   const [marks, setMarks] = useState({ key: null, list: [], persist: true }); // this file's bookmarks
   const [playFailed, setPlayFailed] = useState(false); // the browser's player rejected the file
   const [dolby, setDolby] = useState("off"); // a video's Dolby sound played by SoundScope: off, loading, on, failed
+  // the player can't play this file's container: null, or { progress } while a playable copy is made,
+  // then { blob } or { failed: message }
+  const [copy, setCopy] = useState(null);
   const searchRef = useRef(null);
   const videoRef = useRef(null);
 
@@ -72,8 +75,34 @@ export default function Results({ file, labels, duration, overview, live, store,
     return () => { stale = true; };
   }, [file]);
 
+  // The player can't play the file at all (e.g. MKV in Safari, MPEG-TS in Chrome): play a copy repackaged as MP4.
+  const wantCopy = copy !== null;
+  useEffect(() => {
+    if (!wantCopy) return;
+    let job = null, gone = false;
+    import("../audio/playableCopy.js").then((m) => {
+      if (gone) return;
+      job = m.makePlayableCopy(file, (progress) => setCopy((c) => (c && "progress" in c ? { progress } : c)));
+      job.promise
+        .then((blob) => { if (!gone) setCopy({ blob }); })
+        .catch((e) => { if (!gone && e?.name !== "AbortError") { setCopy({ failed: e.message }); setPlayFailed(true); } });
+    }).catch(() => { if (!gone) { setCopy({ failed: null }); setPlayFailed(true); } });
+    return () => { gone = true; job?.cancel(); }; // the copy is deleted on the next page load
+  }, [wantCopy, file]);
+
+  function cantPlay() {
+    if (copy === null && !live) setCopy({ progress: 0 }); // first try a playable copy
+    else setPlayFailed(true);
+  }
+
+  // test only: act as if the player couldn't play this file (as Safari can't play MKV)
+  useEffect(() => {
+    if (player && copy === null && globalThis.__soundscopeDebug && globalThis.__soundscopeCantPlay) cantPlay();
+  }, [player]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // A video whose Dolby sound the browser can't play: SoundScope plays the sound itself, following the picture.
-  const ownSound = hasVideo && !live && !!codec && !browserPlays(codec);
+  // (A playable copy already has sound the browser plays.)
+  const ownSound = hasVideo && !live && !!codec && !browserPlays(codec) && !copy?.blob;
   useEffect(() => {
     if (!ownSound || !player || !videoRef.current) return;
     let gone = false, sound = null;
@@ -238,7 +267,8 @@ export default function Results({ file, labels, duration, overview, live, store,
   );
 
   const stage = hasVideo && !live; // video: picture next to the moments, timeline under both
-  const silent = !live && dolby !== "on" && dolby !== "loading" && (playFailed || !browserPlays(codec));
+  const preparing = !live && copy && "progress" in copy;
+  const silent = !live && !preparing && dolby !== "on" && dolby !== "loading" && (playFailed || (!browserPlays(codec) && !copy?.blob));
 
   const momentsPanel = (
     <section className="card panel moments-panel">
@@ -374,11 +404,21 @@ export default function Results({ file, labels, duration, overview, live, store,
         </div>
       </div>
 
+      {preparing && (
+        <p className="play-note" role="status">
+          <span className="spinner spinner--sm" aria-hidden="true" />
+          <span>
+            This browser can't play this {hasVideo ? "video" : "file"} as it is, so SoundScope is preparing a copy it can play, on this device
+            ({Math.round(copy.progress * 100)}%). Everything else already works.
+          </span>
+        </p>
+      )}
+
       {silent && (
         <p className="play-note" role="status">
           <VolumeX size={16} aria-hidden="true" />
           <span>
-            {dolby === "failed"
+            {copy?.failed ? copy.failed : dolby === "failed"
               ? "The video's Dolby Digital sound couldn't be played, so the video plays without sound. Check your internet connection and open the file again."
               : browserPlays(codec)
                 ? "This browser can't play this file, so the timeline won't play it."
@@ -412,14 +452,14 @@ export default function Results({ file, labels, duration, overview, live, store,
       ) : (
         <section className="card timeline-card">
           <Player
-            file={file}
+            file={copy?.blob ?? file}
             peaks={peaks}
             duration={duration}
             videoRef={hasVideo ? videoRef : null}
             markers={moments}
             markerColor={activeRow?.color}
             onReady={onPlayer}
-            onCantPlay={() => setPlayFailed(true)}
+            onCantPlay={cantPlay}
           >
             {lanes}
           </Player>

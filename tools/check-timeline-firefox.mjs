@@ -8,6 +8,7 @@ import path from "node:path";
 
 const [longFile, file, shot] = process.argv.slice(2);
 const dir = path.join(os.tmpdir(), "ssprobe-fftl-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 fs.mkdirSync(dir);
 const browser = await puppeteer.launch({
   browser: "firefox", executablePath: "C:/Program Files/Mozilla Firefox/firefox.exe", headless: false, userDataDir: dir,

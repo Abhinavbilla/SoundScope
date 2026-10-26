@@ -14,7 +14,7 @@ export class StreamError extends Error {
     super(message);
     this.kind = kind;
     this.cause = cause;
-    Object.assign(this, extra); // { codec, hasVideo }
+    Object.assign(this, extra); // { codec, hasVideo, oldBrowser }
   }
 }
 
@@ -96,6 +96,13 @@ export async function openAudio(file, { streamReader = true } = {}) {
         null, { codec, hasVideo });
     }
     decodable = await track.canDecode();
+  }
+  if (!decodable && typeof AudioDecoder === "undefined") {
+    // e.g. Safari before 26: no WebCodecs audio, so nothing but plain WAV can be read piece by piece
+    input.dispose();
+    throw new StreamError("codec",
+      `This browser is too old to read this ${hasVideo ? "video's" : "file's"} sound. Update your browser and try again (on a Mac: Safari 26 or newer).`,
+      null, { codec, hasVideo, oldBrowser: true });
   }
   if (!decodable) {
     input.dispose();

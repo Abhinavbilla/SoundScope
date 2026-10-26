@@ -1,7 +1,7 @@
 // Make test files whose sound is Dolby Digital, like many movie MKVs, using Mediabunny's AC-3 extension
 // (no ffmpeg needed). The sound is re-encoded; a video's picture is copied as it is. Runs in Edge or Chrome
 // because decoding the source sound needs WebCodecs.
-// Usage: node tools/make-dolby-sample.mjs <input audio or video> <output .mkv or .mp4> [ac3|eac3] [sound file]
+// Usage: node tools/make-dolby-sample.mjs <input audio or video> <output .mkv, .mp4 or .ts> [ac3|eac3|opus|aac] [sound file]
 //   sound file: use this file's sound instead (e.g. for a video that has none), cut to the video's length
 // Env: SS_BROWSER=msedge|chrome, SS_LOOP=1 (with a sound file: repeat the picture to the sound's length,
 //      e.g. for a long test movie)
@@ -41,13 +41,13 @@ try {
   await tab.setContent(page + `<input type="file" id="f"><input type="file" id="s">`);
   await tab.setInputFiles("#f", input);
   if (sound) await tab.setInputFiles("#s", sound);
-  const bytes = await tab.evaluate(async ({ codec, mkv, loop }) => {
+  const bytes = await tab.evaluate(async ({ codec, ext, loop }) => {
     const mb = await import("mediabunny");
     const { registerAc3Encoder } = await import("/ac3.mjs");
     registerAc3Encoder();
     const open = (id) => new mb.Input({ source: new mb.BlobSource(document.getElementById(id).files[0]), formats: mb.ALL_FORMATS });
     const target = new mb.BufferTarget();
-    const output = new mb.Output({ format: mkv ? new mb.MkvOutputFormat() : new mb.Mp4OutputFormat(), target });
+    const output = new mb.Output({ format: ext === "mkv" ? new mb.MkvOutputFormat() : ext === "ts" ? new mb.MpegTsOutputFormat() : new mb.Mp4OutputFormat(), target });
     if (!document.getElementById("s").files.length) {
       const conversion = await mb.Conversion.init({
         input: open("f"),
@@ -84,7 +84,7 @@ try {
     }
     await output.finalize();
     return (window.__out = new Uint8Array(target.buffer)).length;
-  }, { codec, mkv: output.toLowerCase().endsWith(".mkv"), loop: !!process.env.SS_LOOP });
+  }, { codec, ext: output.toLowerCase().split(".").pop(), loop: !!process.env.SS_LOOP });
   // fetch the file in base64 pieces (a plain array of numbers is very slow for big files)
   const parts = [];
   for (let at = 0; at < bytes; at += 4 << 20) {

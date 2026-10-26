@@ -155,7 +155,7 @@ async function analyseFile({ file, collect, analyse = true, store, streamReader 
     audio = await openAudio(file, { streamReader }); // test only: streamReader
   } catch (e) {
     const kind = e instanceof StreamError ? e.kind : "unreadable";
-    post({ type: "error", kind, message: e.message, detail: String(e.cause ?? e), codec: e.codec, hasVideo: e.hasVideo });
+    post({ type: "error", kind, message: e.message, detail: String(e.cause ?? e), codec: e.codec, hasVideo: e.hasVideo, oldBrowser: e.oldBrowser });
     return;
   }
   const openMs = performance.now() - t0;

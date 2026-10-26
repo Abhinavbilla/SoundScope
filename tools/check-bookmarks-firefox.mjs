@@ -13,6 +13,7 @@ fs.mkdirSync(outDir, { recursive: true });
 const ok = (cond, msg) => console.log(`${cond ? "PASS" : "FAIL"}  ${msg}`);
 const stage = (msg) => process.env.SS_VERBOSE && console.log(`      ... ${msg}`);
 const dir = path.join(os.tmpdir(), "ssprobe-ffbm-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 fs.mkdirSync(dir);
 const browser = await puppeteer.launch({ browser: "firefox", executablePath: "C:/Program Files/Mozilla Firefox/firefox.exe", headless: false, userDataDir: dir });
 const page = (await browser.pages())[0];

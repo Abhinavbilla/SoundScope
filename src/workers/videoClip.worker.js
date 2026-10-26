@@ -20,7 +20,8 @@ self.onmessage = async ({ data: { file, start, end } }) => {
         registerAc3Decoder();
       }
       const codec = await getFirstEncodableAudioCodec(["aac", "opus"], { numberOfChannels: Math.min(2, sound.numberOfChannels), sampleRate: 48000 });
-      audio = codec ? { codec, numberOfChannels: Math.min(2, sound.numberOfChannels), sampleRate: 48000, forceTranscode: true } : { discard: true };
+      // no encoder (e.g. older Safari): keep the Dolby sound as it is; Safari and Edge play it
+      audio = codec ? { codec, numberOfChannels: Math.min(2, sound.numberOfChannels), sampleRate: 48000, forceTranscode: true } : {};
     }
     const target = new BufferTarget();
     const conversion = await Conversion.init({

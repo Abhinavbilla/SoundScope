@@ -18,6 +18,7 @@ const toSec = (t) => t.trim().split(":").reduce((a, x) => a * 60 + Number(x), 0)
 const totals = {};
 
 const dir = path.join(os.tmpdir(), "ssprobe-search-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 const ctx = await chromium.launchPersistentContext(dir, { channel: process.env.SS_BROWSER || "msedge", headless: false, viewport: { width: Number(process.env.SS_WIDTH) || 1100, height: 900 } });
 const page = ctx.pages()[0] || (await ctx.newPage());
 await page.addInitScript((local) => {

@@ -9,6 +9,7 @@ import path from "node:path";
 
 const file = process.argv[2];
 const dir = path.join(os.tmpdir(), "ssprobe-store-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 const ctx = await chromium.launchPersistentContext(dir, { channel: process.env.SS_BROWSER || "msedge", headless: false });
 const page = ctx.pages()[0] || (await ctx.newPage());
 await page.addInitScript((local) => {

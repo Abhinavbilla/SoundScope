@@ -7,6 +7,7 @@ import path from "node:path";
 
 const [longFile, shortFile] = process.argv.slice(2);
 const dir = path.join(os.tmpdir(), "ssprobe-edges-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 const ctx = await chromium.launchPersistentContext(dir, { channel: "msedge", headless: false });
 const page = ctx.pages()[0] || (await ctx.newPage());
 await page.addInitScript(() => { window.__soundscopeDebug = true; window.__soundscopeModelUrl = "/models/efficientsed_fmn10_tf256.onnx"; });

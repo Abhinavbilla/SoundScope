@@ -9,6 +9,7 @@ import path from "node:path";
 const file = process.argv[2];
 const ok = (cond, msg) => console.log(`${cond ? "PASS" : "FAIL"}  ${msg}`);
 const dir = path.join(os.tmpdir(), "ssprobe-ui-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 const ctx = await chromium.launchPersistentContext(dir, { channel: "msedge", headless: false, viewport: { width: 1280, height: 900 } });
 const page = ctx.pages()[0] || (await ctx.newPage());
 await page.addInitScript((local) => {

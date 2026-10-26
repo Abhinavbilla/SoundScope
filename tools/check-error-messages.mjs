@@ -16,6 +16,7 @@ const base = process.env.SS_BASE || "http://localhost:4173";
 const browserName = process.env.SS_BROWSER || "msedge";
 const ok = (cond, msg) => { console.log(`${cond ? "PASS" : "FAIL"}  ${msg}`); if (!cond) process.exitCode = 1; };
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ss-errors-"));
+process.on("exit", () => { try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 
 // Things people shouldn't see: error class names, codes, URLs, file names of code, stack lines, raw values.
 const TECHNICAL = /\b\w*(Error|Exception)\b|\bundefined\b|\bnull\b|\bNaN\b|\bat \S+ \(|0x[0-9a-f]+|https?:|\.m?js\b|\(\d{3}\)|\bstatus \d|\bcode\b|checksum|sha|wasm|worker|onnx|codec|decod/i;

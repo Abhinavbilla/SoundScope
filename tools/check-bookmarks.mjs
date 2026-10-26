@@ -14,6 +14,7 @@ const [outDir, file, ...ats] = process.argv.slice(2);
 fs.mkdirSync(outDir, { recursive: true });
 const ok = (cond, msg) => console.log(`${cond ? "PASS" : "FAIL"}  ${msg}`);
 const dir = path.join(os.tmpdir(), "ssprobe-bm-" + Date.now());
+process.on("exit", () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* still in use */ } }); // no leftover browser profiles
 const ctx = await chromium.launchPersistentContext(dir, {
   channel: process.env.SS_BROWSER || "msedge", headless: false, acceptDownloads: true,
   viewport: { width: Number(process.env.SS_WIDTH) || 1100, height: 900 },
