@@ -61,9 +61,19 @@ export function download(name, data, type) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
+/** A clip problem with a message written for people (anything else is shown as a general message). */
+export class ClipError extends Error {}
+
+/** Saving a clip failed: the disk is full, or the folder can't be written to. */
+function saveFailed(e) {
+  return new ClipError(e?.name === "QuotaExceededError"
+    ? "There isn't enough free space. Free up some space and try again."
+    : "SoundScope couldn't save to that folder. Try again, or choose another folder.");
+}
+
 /**
  * Cut clips (bookmark +/- CLIP_PADDING, kept inside the file) and hand each WAV to `save(name, bytes)`.
- * @returns {Promise<void>} rejects with a message if the file can't be cut
+ * @returns {Promise<void>} rejects with a ClipError if the file can't be cut or a clip can't be saved
  */
 export function makeClips(file, bookmarks, duration, save, onProgress) {
   if (globalThis.__soundscopeForceFallback) { // test only: the whole-file path
@@ -80,11 +90,14 @@ export function makeClips(file, bookmarks, duration, save, onProgress) {
     }));
     let done = 0;
     let queue = Promise.resolve(); // handle messages one after another: a save may take a while
-    const fail = (e) => { worker.terminate(); reject(e instanceof Error ? e : new Error(String(e))); };
+    const fail = (e) => {
+      worker.terminate();
+      reject(e instanceof ClipError ? e : new ClipError("Something went wrong while cutting the sound. Please try again.", { cause: e }));
+    };
     worker.onmessage = ({ data }) => {
       queue = queue.then(async () => {
         if (data.type === "clip") {
-          await save(clipName(file.name, byId.get(data.id)), data.wav);
+          await save(clipName(file.name, byId.get(data.id)), data.wav).catch((e) => { throw saveFailed(e); });
           onProgress?.(++done, clips.length);
         } else if (data.type === "done") {
           worker.terminate();
@@ -95,23 +108,26 @@ export function makeClips(file, bookmarks, duration, save, onProgress) {
           if (data.open && done === 0 && file.size <= WHOLE_FILE_MAX_BYTES) {
             await clipsFromWholeFile(file, clips, byId, save, onProgress);
             resolve();
-          } else reject(new Error(data.message));
+          } else reject(new ClipError(data.message)); // the worker's messages are written for people
         }
       }).catch(fail);
     };
-    worker.onerror = (e) => fail(new Error(e.message || "Clip export failed."));
+    worker.onerror = (e) => fail(e);
     worker.postMessage({ file, clips });
   });
 }
 
 async function clipsFromWholeFile(file, clips, byId, save, onProgress) {
   const ctx = new OfflineAudioContext(1, 1, 44100);
-  const buf = await ctx.decodeAudioData(await file.arrayBuffer());
+  const buf = await ctx.decodeAudioData(await file.arrayBuffer()).catch((e) => {
+    throw new ClipError("This file can't be cut into clips in this browser. Try converting it to MP3 or MP4.", { cause: e });
+  });
   const chans = Array.from({ length: Math.min(2, buf.numberOfChannels) }, (_, c) => buf.getChannelData(c));
   let done = 0;
   for (const clip of clips) {
     const a = Math.round(clip.start * buf.sampleRate), b = Math.round(clip.end * buf.sampleRate);
-    await save(clipName(file.name, byId.get(clip.id)), encodeWav(chans.map((ch) => ch.slice(a, b)), buf.sampleRate));
+    await save(clipName(file.name, byId.get(clip.id)), encodeWav(chans.map((ch) => ch.slice(a, b)), buf.sampleRate))
+      .catch((e) => { throw saveFailed(e); });
     onProgress?.(++done, clips.length);
   }
 }

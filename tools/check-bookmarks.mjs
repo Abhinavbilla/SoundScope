@@ -130,7 +130,7 @@ ok(!!clip1 && fs.statSync(clip1).size > 44, `single clip: ${clip1 && path.basena
 const t0 = Date.now();
 if (process.env.SS_FOLDER) {
   await page.click("text=Download all clips");
-  await page.waitForFunction(() => /\d+ clips saved|couldn/.test(document.querySelector(".bookmarks [role=status]")?.textContent ?? ""), null, { timeout: 120_000 });
+  await page.waitForFunction(() => /\d+ clips saved|couldn/.test(document.querySelector(".toasts")?.textContent ?? ""), null, { timeout: 120_000 });
   const files = await page.evaluate(async () => {
     const d = await (await navigator.storage.getDirectory()).getDirectoryHandle("picked");
     const out = [];
@@ -140,10 +140,10 @@ if (process.env.SS_FOLDER) {
   ok(files.length === after.length, `all clips into the picked folder: ${JSON.stringify(files)} in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 } else {
   const all = await grab(() => page.click("text=Download all clips"), after.length);
-  await page.waitForFunction(() => /\d+ clips saved|couldn/.test(document.querySelector(".bookmarks [role=status]")?.textContent ?? ""), null, { timeout: 30_000 }).catch(() => {});
+  await page.waitForFunction(() => /\d+ clips saved|couldn/.test(document.querySelector(".toasts")?.textContent ?? ""), null, { timeout: 30_000 }).catch(() => {});
   ok(all.length === after.length, `all clips as downloads: ${all.length} of ${after.length} (${all.map((f) => path.basename(f)).join(", ")}) in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 }
-const status = await page.textContent(".bookmarks [role=status]").catch(() => "");
+const status = await page.textContent(".toasts").catch(() => "");
 console.log(`      status: ${status}`);
 console.log(`      file: ${name}`);
 await ctx.close();

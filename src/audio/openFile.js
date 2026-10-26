@@ -48,7 +48,7 @@ export function openAudioFile(file, { onInfo, onProgress, onModel, onOverview, c
       worker.onmessage = ({ data }) => handle(data);
       worker.onerror = (e) => {
         worker.terminate();
-        reject(new DecodeError("unsupported", "Something went wrong while analysing this file.", e.message));
+        reject(new DecodeError("unsupported", "Something went wrong while analysing this file. Reload the page and try again.", e.message));
       };
       worker.postMessage(message, transfer);
     }
@@ -103,7 +103,10 @@ export function openAudioFile(file, { onInfo, onProgress, onModel, onOverview, c
           const video = data.hasVideo || looksLikeVideo(file);
           if (data.kind === "model") reject(new DecodeError("model", data.message, data.detail));
           else if (data.kind === "no-audio") reject(new DecodeError("empty", data.message, data.detail));
-          else if (video && data.kind === "codec") reject(new DecodeError("unsupported", data.message, data.detail));
+          // the browser's whole-file decoder can't read Dolby either, so its message is the useful one
+          else if (data.kind === "codec" && (video || data.codec === "ac3" || data.codec === "eac3")) {
+            reject(new DecodeError("unsupported", data.message, data.detail));
+          }
           else if (video && data.kind === "unreadable") {
             reject(new DecodeError("unsupported",
               "This kind of video can't be opened. SoundScope opens MP4, MOV, WebM, MKV and TS videos.", data.detail));

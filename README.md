@@ -84,6 +84,7 @@ node tools/check-bookmarks.mjs <outDir> <audio>  # bookmarks, notes, downloads
 node tools/check-note-search.mjs <outDir> <audio>
 node tools/make-dolby-sample.mjs <audio or video> <out.mkv> [ac3|eac3] [sound file]   # a Dolby test file, no ffmpeg
 SS_BROWSER=chrome node tools/check-dolby.mjs <outDir> <dolby file> [same recording, normal format]
+node tools/check-error-messages.mjs <audio> [video with no sound]   # breaks things on purpose; every message must be plain, with a next step
 node tools/check-site.mjs <site url> <audio> <video>   # a deployed site: headers, model, no outside requests
 ```
 

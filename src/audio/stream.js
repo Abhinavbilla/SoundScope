@@ -87,13 +87,20 @@ export async function openAudio(file, { streamReader = true } = {}) {
   }
   const codec = await track.getCodec();
   let decodable = await track.canDecode();
-  if (!decodable && (codec === "ac3" || codec === "eac3") && (await loadDolbyDecoder())) {
+  const dolbyTrack = codec === "ac3" || codec === "eac3";
+  if (!decodable && dolbyTrack) {
+    if (!(await loadDolbyDecoder())) {
+      input.dispose();
+      throw new StreamError("codec",
+        `This ${hasVideo ? "video's" : "file's"} sound is Dolby Digital. To read it, SoundScope first downloads a small extra part (about 1 MB). Check your internet connection and try again.`,
+        null, { codec, hasVideo });
+    }
     decodable = await track.canDecode();
   }
   if (!decodable) {
     input.dispose();
     const name = CODEC_NAMES[codec] ?? codec;
-    const format = name ? `a sound format (${name})` : "a sound format";
+    const format = name ? `a sound format, ${name},` : "a sound format";
     throw new StreamError("codec",
       `This ${hasVideo ? "video" : "file"} uses ${format} that SoundScope can't read. Convert it to MP4 or MP3 and open it again.`,
       null, { codec, hasVideo });

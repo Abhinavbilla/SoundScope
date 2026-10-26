@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, FolderOpen, Laptop, Lock, Moon, Sun, Upload, X } from "lucide-react";
+import { FolderOpen, Laptop, Lock, Moon, Sun, Upload, X } from "lucide-react";
 import { openAudioFile } from "./audio/openFile.js";
 import { DecodeError } from "./audio/decode.js";
 import { downsamplePeaks } from "./audio/peaks.js";
@@ -7,6 +7,7 @@ import { MODEL } from "./model/config.js";
 import { formatDuration, formatEta } from "./results/format.js";
 import { plainName } from "./results/names.js";
 import Results from "./components/Results.jsx";
+import { dismiss, toast, Toaster } from "./components/Toasts.jsx";
 
 const CLASSES = MODEL.labels.length;
 const NAMES = MODEL.labels.map(plainName); // everyday names shown in the app
@@ -55,6 +56,7 @@ function useTheme() {
 
 export default function App() {
   const [state, setState] = useState({ status: "idle" });
+  if (state.status === "ready" && debug() && window.__soundscopeCrash) throw new Error("test only: interface crash");
   const [dragging, setDragging] = useState(false);
   const [player, setPlayer] = useState(null);
   const [themeChoice, setThemeChoice, theme] = useTheme();
@@ -99,6 +101,7 @@ export default function App() {
 
   async function open(file) {
     if (!file) return;
+    dismiss("open-error");
     job.current?.cancel();
     if (debug()) window.__soundscopeFile = file;
     const t0 = performance.now();
@@ -152,6 +155,10 @@ export default function App() {
       }
       const message = e instanceof DecodeError ? e.message : "Something went wrong while opening this file. Please try again.";
       setState({ status: "error", file, message });
+      toast({
+        id: "open-error", tone: "error", title: `Couldn't open ${file.name}`, text: message,
+        action: { label: "Choose another file", onClick: () => document.getElementById("file-input")?.click() },
+      });
       if (debug()) window.__soundscopeLast = { ok: false, kind: e?.kind, message, detail: String(e?.cause ?? e) };
     } finally {
       if (job.current === current) job.current = null;
@@ -195,17 +202,6 @@ export default function App() {
 
         {busy && <Progress state={state} onCancel={cancel} />}
 
-        {state.status === "error" && (
-          <section className="card error" role="alert" style={{ order: -1 }}>
-            <div className="error__icon"><AlertTriangle size={22} /></div>
-            <div className="error__text">
-              <h2 className="h2">Couldn't open {state.file.name}</h2>
-              <p>{state.message}</p>
-            </div>
-            <label htmlFor="file-input" className="button" role="button" tabIndex={0}>Choose another file</label>
-          </section>
-        )}
-
         {/* Same component (same key) during and after the analysis, so slider and picks carry over. */}
         {showResults && (
           <Results
@@ -238,6 +234,8 @@ export default function App() {
           </p>
         </details>
       </footer>
+
+      <Toaster />
 
       {dragging && (
         <div className="dropzone-overlay" aria-hidden="true">

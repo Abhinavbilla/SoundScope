@@ -206,7 +206,7 @@ function errorFor(e) {
         : "SoundScope couldn't start its sound finder. Reload the page and try again.",
     };
   }
-  return { type: "error", kind: "unsupported", message: "This file couldn't be read. It may be damaged.", detail: String(e) };
+  return { type: "error", kind: "unsupported", message: "This file couldn't be read. It may be damaged. Try converting it to MP3 or MP4 and opening it again.", detail: String(e) };
 }
 
 async function finish(result, writer, storeReason, channels, file, timings, hasVideo = false, codec = null) {

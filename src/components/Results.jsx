@@ -13,6 +13,7 @@ import Player, { Ruler } from "./Player.jsx";
 import Search from "./Search.jsx";
 import Strength from "./Strength.jsx";
 import TimelineRow from "./TimelineRow.jsx";
+import { toast } from "./Toasts.jsx";
 
 const DEFAULT_ROWS = 3; // sounds shown on the timeline before the user picks any
 const BACKGROUND_SHARE = 0.8; // sounds heard in more of the file than this aren't picked by default
@@ -150,8 +151,15 @@ export default function Results({ file, labels, duration, overview, live, store,
   }
 
   async function updateMarks(change) {
-    await change();
-    const list = await listBookmarks(marks.key);
+    try {
+      await change();
+    } catch {
+      toast({
+        id: "bookmark-not-saved", tone: "error", title: "Bookmark not saved",
+        text: "Your device may be out of space. Free up some space and try again.",
+      });
+    }
+    const list = await listBookmarks(marks.key).catch(() => marks.list);
     setMarks((m) => ({ ...m, list }));
   }
   const sameMoment = (b, m, label) => Math.abs(b.start - m.start) < 0.01 && Math.abs(b.end - m.end) < 0.01 && b.label === label;

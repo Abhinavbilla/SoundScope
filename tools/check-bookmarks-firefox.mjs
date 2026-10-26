@@ -86,8 +86,8 @@ const n = await page.$$eval(".bookmark", (els) => els.length);
 ok(n === 1 + ats.length, `bookmarks after reopening: ${n}`);
 await page.evaluate(() => [...document.querySelectorAll(".bookmarks button")].find((b) => b.textContent.trim() === "Download list").click());
 await page.evaluate(() => [...document.querySelectorAll(".bookmarks button")].find((b) => b.textContent.trim() === "Download all clips").click());
-const status = await waitFor(() => /\d+ clips saved|Clip saved|couldn/.test(document.querySelector(".bookmarks [role=status]")?.textContent ?? "")
-  && document.querySelector(".bookmarks [role=status]").textContent, 300_000);
+const status = await waitFor(() => /\d+ clips saved|Clip saved|couldn/.test(document.querySelector(".toasts")?.textContent ?? "")
+  && document.querySelector(".toasts").textContent, 300_000);
 const files = await saveDownloads();
 ok(files.length === n + 1 && /saved/.test(status ?? ""), `Firefox: ${status}; files ${JSON.stringify(files)}`);
 await browser.close();

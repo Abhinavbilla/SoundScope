@@ -96,6 +96,29 @@ Dolby Digital sound (AC-3 / E-AC-3, 2026-10-25). A user's movie MKV failed in Ch
 
   `check-site.mjs` (Chrome, with the Dolby video) and `check-ui-controls.mjs` still pass.
 
+Error messages (2026-10-25). Every message on screen is written for people and says what to do next. No error names, codes or browser text are ever shown.
+- **Clips:** only the app's own messages are shown. Disk full and unwritable folders get their own messages, and anything else gets "The clips couldn't be made. Please try again."
+- **Bookmarks:** a bookmark that can't be saved shows a message that can be dismissed. It used to fail silently.
+- **Interface crash:** shows "Something went wrong on this page" with a Reload button (`ErrorBoundary`), not a blank page.
+- **Dolby offline:** if the Dolby decoder can't be downloaded, the message says to check the connection.
+- **Next steps:** file messages that lacked one now have it.
+
+**Pop-ups.** Messages appear as small pop-ups in the bottom-right corner (`src/components/Toasts.jsx`): "Couldn't open…" with "Choose another file", clip progress then "N clips saved", "Bookmark deleted" with Undo, and "Bookmark not saved".
+- Each has a title and a line of text, plus an action button where one helps.
+- Errors stay until closed. Others close after 5 s, but not while the mouse or keyboard focus is on them.
+- They use the theme's colours and a short entrance animation (off with reduced motion), and they span the full width on phones.
+- The Dolby "plays without sound" note stays on the page, because it describes the file, not an event.
+
+`tools/check-error-messages.mjs` breaks things on purpose and rejects any message with technical words or no next step. All 15 cases pass:
+- empty, damaged and mislabelled files;
+- a video with no sound;
+- the model missing, corrupted or offline;
+- the Dolby decoder offline;
+- a full disk for clips;
+- the clip maker failing;
+- a bookmark save failing;
+- an interface crash.
+
 ## Licenses
 
 - **EfficientSED (current model):** MIT (theMoro/EfficientSED, copyright (c) 2024 Florian Schmid). The Hugging Face copy includes the licence and credits the paper: Morocutti, Schmid, Greif, Foscarin, Widmer, "Exploring Performance-Complexity Trade-Offs in Sound Event Detection Models", EUSIPCO 2025. The app's credits say the same.

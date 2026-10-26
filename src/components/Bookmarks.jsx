@@ -1,29 +1,42 @@
 import { useState } from "react";
 import { BookmarkPlus, FileSpreadsheet, Music2, Play, Scissors, Trash2 } from "lucide-react";
 import { formatTime } from "../results/format.js";
-import { bookmarksCsv, clipSaver, csvName, download, makeClips } from "../export/exportFiles.js";
+import { bookmarksCsv, ClipError, clipSaver, csvName, download, makeClips } from "../export/exportFiles.js";
+import { toast } from "./Toasts.jsx";
 
 /**
  * Saved moments for this file: play, add a note, remove, and export (CSV, or WAV clips with 1 s of
  * padding, one file per clip).
  */
 export default function Bookmarks({ file, duration, bookmarks, persist, canPlay, onPlay, onNote, onRemove, onRestore, onAddHere }) {
-  const [status, setStatus] = useState(null); // { text, error, undo: the deleted bookmark }
   const [busy, setBusy] = useState(false);
 
   async function clips(list) {
-    const save = await clipSaver(list.length);
-    if (!save) return; // folder picker cancelled
     setBusy(true);
-    setStatus({ text: `Making clips… 0 of ${list.length}` });
+    const id = "clips"; // one toast: progress, then saved or the problem
     try {
-      await makeClips(file, list, duration, save, (n, total) => setStatus({ text: `Making clips… ${n} of ${total}` }));
-      setStatus({ text: list.length === 1 ? "Clip saved." : `${list.length} clips saved.` });
+      const save = await clipSaver(list.length);
+      if (!save) return; // folder picker cancelled
+      const making = (n) => toast({ id, tone: "progress", title: list.length === 1 ? "Making the clip…" : `Making clips… ${n} of ${list.length}` });
+      making(0);
+      await makeClips(file, list, duration, save, making);
+      toast({ id, tone: "success", title: list.length === 1 ? "Clip saved" : `${list.length} clips saved` });
     } catch (e) {
-      setStatus({ text: e.message || "The clips couldn't be made.", error: true });
+      toast({
+        id, tone: "error", title: list.length === 1 ? "Clip not saved" : "Clips not saved",
+        text: e instanceof ClipError ? e.message : "Something went wrong while cutting the sound. Please try again.",
+      });
     } finally {
       setBusy(false);
     }
+  }
+
+  function remove(b) {
+    onRemove(b);
+    toast({
+      id: `deleted-${b.id}`, tone: "info", title: `Bookmark at ${formatTime(b.start)} deleted`,
+      action: { label: "Undo", onClick: () => onRestore(b) },
+    });
   }
 
   return (
@@ -41,14 +54,6 @@ export default function Bookmarks({ file, duration, bookmarks, persist, canPlay,
           <Music2 size={15} /> Download all clips
         </button>
       </div>
-      {status && (
-        <p className={`small ${status.error ? "bad" : "muted"}`} role="status">
-          {status.text}
-          {status.undo && (
-            <> <button type="button" className="link-btn" onClick={() => { onRestore(status.undo); setStatus(null); }}>Undo</button></>
-          )}
-        </p>
-      )}
       {!persist && <p className="small muted">Bookmarks can't be saved in this browser window, so they'll be lost when it closes.</p>}
       {bookmarks.length === 0 ? (
         <div className="empty">
@@ -77,7 +82,7 @@ export default function Bookmarks({ file, duration, bookmarks, persist, canPlay,
                 <Scissors size={14} /> Clip
               </button>
               <button type="button" className="bookmark__remove" aria-label={`Delete bookmark at ${formatTime(b.start)}`} title="Delete bookmark"
-                onClick={() => { onRemove(b); setStatus({ text: `Bookmark at ${formatTime(b.start)} deleted.`, undo: b }); }}>
+                onClick={() => remove(b)}>
                 <Trash2 size={15} />
               </button>
             </li>

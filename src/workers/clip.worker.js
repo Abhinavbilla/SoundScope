@@ -8,7 +8,7 @@
 // In:  { file, clips: [{ id, start, end }] }   Out: { type: "clip", id, wav } per clip, then { type: "done" }
 //      or { type: "error", message, open } (open: the file couldn't be opened here at all)
 import { AudioSampleSink, OGG } from "mediabunny";
-import { openAudio } from "../audio/stream.js";
+import { openAudio, StreamError } from "../audio/stream.js";
 import { encodeWav } from "../export/wav.js";
 
 const LEAD_IN = 0.5; // seconds decoded before a clip and thrown away (a decoder starting mid-stream can glitch)
@@ -18,7 +18,8 @@ self.onmessage = async ({ data: { file, clips } }) => {
   try {
     audio = await openAudio(file);
   } catch (e) {
-    self.postMessage({ type: "error", open: true, message: e.message || "This file can't be read for clips." });
+    // only our own messages are shown; anything else is a browser error, not written for people
+    self.postMessage({ type: "error", open: true, message: e instanceof StreamError ? e.message : "This file can't be cut into clips in this browser. Try converting it to MP3 or MP4." });
     return;
   }
   try {
@@ -58,7 +59,7 @@ self.onmessage = async ({ data: { file, clips } }) => {
     }
     self.postMessage({ type: "done" });
   } catch (e) {
-    self.postMessage({ type: "error", message: "A clip couldn't be made. Please try again.", detail: String(e?.message ?? e) });
+    self.postMessage({ type: "error", message: "Something went wrong while cutting the sound. Please try again.", detail: String(e?.message ?? e) });
   } finally {
     audio.input.dispose();
   }

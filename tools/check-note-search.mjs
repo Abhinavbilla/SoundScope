@@ -99,7 +99,7 @@ await d.saveAs(path.join(outDir, name));
 ok(/-Riya-laughing-at-the-cake-0-1\d\.\d\.wav$/.test(name), `clip name: ${name}`);
 
 // delete button: visible without hovering, deletes, and Undo brings the bookmark (and its note) back
-await page.waitForFunction(() => /Clip saved/.test(document.querySelector(".bookmarks [role=status]")?.textContent ?? ""));
+await page.waitForFunction(() => /Clip saved/.test(document.querySelector(".toasts")?.textContent ?? ""));
 await page.mouse.move(5, 5);
 const del = await page.locator(".bookmark__remove").first().evaluate((el) => {
   const s = getComputedStyle(el), r = el.getBoundingClientRect(), svg = el.querySelector("svg")?.getBoundingClientRect();
@@ -110,9 +110,9 @@ const before = await page.$$eval(".bookmark__note", (els) => els.map((e) => e.va
 await page.locator(".bookmark__remove").first().click();
 await page.waitForTimeout(400);
 const after = await page.$$eval(".bookmark__note", (els) => els.map((e) => e.value));
-const msg = await page.$eval(".bookmarks [role=status]", (e) => e.textContent);
+const msg = await page.$eval(".toasts", (e) => e.textContent);
 ok(after.length === before.length - 1 && /deleted/.test(msg) && /Undo/.test(msg), `delete: ${before.length} -> ${after.length}, "${msg}"`);
-await page.click('.bookmarks [role=status] button:has-text("Undo")');
+await page.click('.toasts button:has-text("Undo")');
 await page.waitForTimeout(400);
 const back = await page.$$eval(".bookmark__note", (els) => els.map((e) => e.value));
 ok(back.length === before.length && before.every((n) => back.includes(n)), `undo: ${back.length} bookmarks, notes kept ${JSON.stringify(back)}`);

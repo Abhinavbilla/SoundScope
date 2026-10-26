@@ -40,7 +40,7 @@ async function startDecodes(file) {
  *   channels: number, timings: {readMs: number, decodeMs: number, mixMs: number}}>}
  */
 export async function decodeToMono(file, onStage) {
-  if (file.size === 0) throw new DecodeError("empty", "This file is empty.");
+  if (file.size === 0) throw new DecodeError("empty", "This file is empty. Choose another file.");
 
   onStage?.("reading");
   let t = performance.now();
@@ -48,7 +48,7 @@ export async function decodeToMono(file, onStage) {
   try {
     bytes = await file.arrayBuffer();
   } catch (e) {
-    throw new DecodeError("memory", "The browser couldn't load this file into memory. It may be too large.", e);
+    throw new DecodeError("memory", "The browser couldn't load this file into memory. It may be too large. Close other tabs and try again, or try a shorter file.", e);
   }
   const readMs = performance.now() - t;
 
@@ -68,7 +68,7 @@ export async function decodeToMono(file, onStage) {
     }
     throw new DecodeError(
       "unsupported",
-      "This file couldn't be read. It may be damaged, or in a format this browser can't play.",
+      "This file couldn't be read. It may be damaged, or in a format this browser can't play. Try converting it to MP3 or MP4.",
       e,
     );
   }
@@ -90,7 +90,7 @@ export async function decodeToMono(file, onStage) {
   }
   const mixMs = performance.now() - t;
 
-  if (samples.length === 0) throw new DecodeError("empty", "This file contains no audio.");
+  if (samples.length === 0) throw new DecodeError("empty", "This file has no sound in it. Choose another file.");
 
   return {
     samples,

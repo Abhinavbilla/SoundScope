@@ -60,7 +60,7 @@ if (video) {
   await shot("6-video");
 }
 await page.setInputFiles("input[type=file]", "test-audio/video/v2min.avi");
-await page.waitForSelector(".error", { timeout: 30_000 });
+await page.waitForSelector(".toast--error", { timeout: 30_000 });
 await shot("7-error", false);
 await b.close();
 console.log("done", tag);
